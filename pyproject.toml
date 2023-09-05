@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "prose"
+version = "0.1.0"
+description = ""
+authors = ["Romuald Rousseau <romualdrousseau@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+tree-sitter = "^0.20.1"
+openai = "^0.28.0"
+jsbeautifier = "^1.14.9"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
