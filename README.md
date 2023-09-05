@@ -12,7 +12,22 @@ without documentation or tests. Additionally, Prose collects all information and
 
 ## Feature overview
 
-TBD by Prose
+- Support OpenAI
+    - Documentation: OK
+    - Tests: OK
+    - Code Generation: TBD
+- Support Java
+    - Documentation: OK
+    - Tests: OK
+- Support Python
+    - Documentation: TBD
+    - Tests: TBD
+- Support Behave
+    - Code generation: TBD
+- Support Poetry
+    - Documentation: TBD
+- Support Maven
+     - Documentation: TBD
 
 ## How it works?
 
