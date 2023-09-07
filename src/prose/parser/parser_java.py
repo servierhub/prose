@@ -17,11 +17,11 @@ class ParserJava(ParserBase):
         self.parser.set_language(JAVA_LANGUAGE)
 
     def parse(self, code: Code) -> None:
-        tree = self.parser.parse(lambda _, p: code.get_bytes_at(p))
+        tree = self.parser.parse(lambda _, p: code.get_bytes_at(p))  # type: ignore
         cursor = tree.walk()
         self._parse_class(code, cursor, code.file)
-        self._parse_method(code, cursor, code.file)
-        self._parse_method(code, cursor, code.file)
+        while self._parse_method(code, cursor, code.file):
+            pass
 
     def _parse_class(self, code: Code, cursor: TreeCursor, file: File) -> None:
         # Go inside program
@@ -37,8 +37,9 @@ class ParserJava(ParserBase):
         # Find the class identifier
         while cursor.node.type != "identifier":
             cursor.goto_next_sibling()
-        class_name = code.get_str_between(
-            cursor.node.start_point, cursor.node.end_point
+        class_name = (
+            code.get_str_between(cursor.node.start_point, cursor.node.end_point)
+            or "unknown"
         )
 
         if file.clazz is None or file.clazz.name != class_name:
@@ -52,10 +53,14 @@ class ParserJava(ParserBase):
             cursor.goto_next_sibling()
         cursor.goto_first_child()
 
-    def _parse_method(self, code: Code, cursor: TreeCursor, file: File) -> None:
-        # Find the next method
-        while cursor.node.type != "method_declaration":
-            cursor.goto_next_sibling()
+    def _parse_method(self, code: Code, cursor: TreeCursor, file: File) -> bool:
+        # Find the next method if any
+        hasSibling = True
+        while hasSibling and not (cursor.node.type in ("constructor_declaration", "method_declaration")):
+            hasSibling = cursor.goto_next_sibling()
+        if not hasSibling:
+            return False
+
         method_start_point = cursor.node.start_point
         method_end_point = cursor.node.end_point
 
@@ -64,16 +69,23 @@ class ParserJava(ParserBase):
         child_cursor.goto_first_child()
         while child_cursor.node.type != "identifier":
             child_cursor.goto_next_sibling()
-        method_name = code.get_str_between(
-            child_cursor.node.start_point, child_cursor.node.end_point
+        method_name = (
+            code.get_str_between(
+                child_cursor.node.start_point, child_cursor.node.end_point
+            )
+            or "unknown"
         )
 
         method = next(filter(lambda x: x.name == method_name, file.methods), None)
         if method is None:
-            file.methods.append(Method(method_name, method_start_point, method_end_point))
+            file.methods.append(
+                Method(method_name, method_start_point, method_end_point)
+            )
         else:
             method.start_point = method_start_point
             method.end_point = method_end_point
 
         # Find the next method
         cursor.goto_next_sibling()
+
+        return True

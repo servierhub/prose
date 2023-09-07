@@ -7,6 +7,7 @@ from dataclasses import dataclass, field, asdict
 from prose.domain.clazz import Class
 from prose.domain.method import Method
 
+
 @dataclass
 class File:
     name: str
@@ -25,5 +26,5 @@ class File:
             file.methods = [Method(**x) for x in data["methods"]]
             return file
 
-    def asdict(self) -> File:
+    def asdict(self) -> dict[str, File]:
         return asdict(self)

@@ -1,0 +1,9 @@
+{feature file}
+
+Generate the python code for those behave scenarios
+
+{code stub}
+
+Complete this code in the context of {context}
+
+{code final}

@@ -1,10 +1,9 @@
 import os
 import json
+
 import jsbeautifier
 
 from prose.domain.file import File
-from prose.domain.clazz import Class
-from prose.domain.method import Method
 
 
 class FileRepository:
@@ -13,17 +12,17 @@ class FileRepository:
     def __init__(self):
         pass
 
-    def find(self, name: str) -> File | None:
-        return FileRepository.Storage.get(name)
+    def find(self, path: str) -> File | None:
+        return FileRepository.Storage.get(path)
 
-    def findall(self) -> File:
+    def findall(self) -> list[File]:
         return list(FileRepository.Storage.values())
 
     def upsert(self, afile: File) -> None:
-        FileRepository.Storage[afile.name] = afile
+        FileRepository.Storage[afile.path] = afile
 
     def delete(self, afile: File) -> None:
-        del FileRepository.Storage[afile.name]
+        del FileRepository.Storage[afile.path]
 
     def load(self, file_path: str) -> None:
         tmp = dict[str, File]()
@@ -35,8 +34,8 @@ class FileRepository:
             data = []
 
         for file_data in data:
-            file_name = file_data["name"]
-            tmp[file_name] = File.of(file_data)
+            file_path = file_data["path"]
+            tmp[file_path] = File.of(file_data)
 
         FileRepository.Storage = tmp
 

@@ -1,9 +1,11 @@
+import os
+
+from time import sleep
 from typing import Callable
 
 import openai
 
 from prose.parser.code import Code
-from prose.domain.file import File
 from prose.domain.clazz import Class
 from prose.domain.method import Method
 from prose.parser.parser_java import JAVA_DOC_FRAMEWORK, JAVA_TEST_FRAMEWORK
@@ -30,65 +32,82 @@ Extract all generated methods and remove everything else.
 Do not include the import and class definition.
 """
 
+
 class LLM:
     def __init__(self):
         openai.api_type = "azure"
         openai.api_base = "https://openaidafa.openai.azure.com/"
         openai.api_version = "2023-07-01-preview"
-        openai.api_key = "a0dfae22426046e99380333303428a4e"
+        openai.api_key = os.getenv("OPENAI_API_KEY")
 
-    def commentify_class(self, clazz: Class, methods: (Method), filter:Callable[[str], str] | None=None) -> None:
+    def commentify_class(
+        self,
+        clazz: Class,
+        methods: list[Method],
+        filter: Callable[[str], str] | None = None,
+    ) -> None:
         prompt = "\n".join(
-            [
-                PROMPT_DOCUMENT_CLASS,
-                "Class: " + clazz.name,
-                ""
-            ] + [
-                "\n".join(method.comment) + "\n" for method in methods
-            ]
+            [PROMPT_DOCUMENT_CLASS, "Class: " + clazz.name, ""]
+            + ["\n".join(method.comment or []) + "\n" for method in methods]
         )
         content = self._query(prompt)
-        if filter is not None:
-            content = filter(content)
-        clazz.comment = content.splitlines()
+        if content is not None:
+            if filter is not None:
+                content = filter(content)
+            clazz.comment = content.splitlines()
+            clazz.status = "new"
 
-    def commentify_method(self, code: Code, method: Method, filter:Callable[[str], str] | None=None) -> None:
+    def commentify_method(
+        self, code: Code, method: Method, filter: Callable[[str], str] | None = None
+    ) -> None:
         prompt = "\n".join(
             [
                 PROMPT_DOCUMENT_METHOD,
                 code.get_block_between(
                     method.start_point, method.end_point, show_line_numbers=False
-                )
+                ),
             ]
         )
         content = self._query(prompt)
-        if filter is not None:
-            content = filter(content)
-        method.comment = content.splitlines()
+        if content is not None:
+            if filter is not None:
+                content = filter(content)
+            method.comment = content.splitlines()
+            method.status = "new"
 
-    def testify_method(self, code: Code, method: Method, filter:Callable[[str], str] | None=None) -> None:
+    def testify_method(
+        self, code: Code, method: Method, filter: Callable[[str], str] | None = None
+    ) -> None:
         prompt = "\n".join(
             [
                 PROMPT_UNIT_TEST,
                 code.get_block_between(
                     method.start_point, method.end_point, show_line_numbers=False
-                )
+                ),
             ]
         )
         content = self._query(prompt)
-        if filter is not None:
-            content = filter(content)
-        method.test = content.splitlines()
+        if content is not None:
+            if filter is not None:
+                content = filter(content)
+            method.test = content.splitlines()
+            method.status = "new"
 
-    def _query(self, prompt: str, temperature: float=0):
-        response = openai.ChatCompletion.create(
-            engine="chat_gpt",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=temperature,
-            max_tokens=800,
-            top_p=0.95,
-            frequency_penalty=0,
-            presence_penalty=0,
-            stop=None,
-        )
-        return response["choices"][0]["message"]["content"]
+    def _query(self, prompt: str, temperature: float = 0, retry: int = 3) -> str | None:
+        if retry == 0:
+            return None
+        try:
+            response = openai.ChatCompletion.create(
+                engine="chat_gpt",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=temperature,
+                max_tokens=800,
+                top_p=0.95,
+                frequency_penalty=0,
+                presence_penalty=0,
+                stop=None,
+            )
+            return response["choices"][0]["message"]["content"]  # type: ignore
+        except openai.OpenAIError:
+            sleep(1)
+            return self._query(prompt, temperature, retry - 1)
