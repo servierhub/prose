@@ -39,7 +39,7 @@ If any "new" are found, Prose warns the developper and terminates in error, othe
 - Step 2: the developer checks the prose.json for status "new", check and corrects the proposed comments and tests and
 then change the status as "final".
 
-- Step 3: the tool reruns in merge mode all comments and tests marked "final".
+- Step 3: the tool reruns in merge mode all comments and tests marked "review".
 
 ## Getting Started
 

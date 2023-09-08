@@ -4,7 +4,7 @@ clean:
     rm -rf data/src
     rm prose.json
 
-prepare: clean
+prepare:
     cp -R data/src.orig data/src
 
 build:
@@ -14,7 +14,7 @@ install:
     poetry install
 
 compile:
-    poetry run python src/prose
+    poetry run python src/prose parse
 
 merge:
-    poetry run python src/prose --merge --inplace
+    poetry run python src/prose merge --inplace

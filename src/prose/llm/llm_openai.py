@@ -11,6 +11,8 @@ from prose.domain.method import Method
 from prose.parser.parser_java import JAVA_DOC_FRAMEWORK, JAVA_TEST_FRAMEWORK
 from prose.util.util import retry
 
+OPENAI_ENGINE = "chat_gpt"
+
 PROMPT_DOCUMENT_CLASS = f"""
 Comment the class by summarizing the {JAVA_DOC_FRAMEWORK} comments below.
 Do not include too much details.
@@ -51,12 +53,15 @@ class LLMOpenAI(LLMBase):
             [PROMPT_DOCUMENT_CLASS, "Class: " + clazz.name, ""]
             + ["\n".join(method.comment or []) + "\n" for method in methods]
         )
+
         content = retry(lambda: self._query(prompt))
-        if content is not None:
-            if filter is not None:
-                content = filter(content)
-            clazz.comment = content.splitlines()
-            clazz.status = "new"
+        if content is None:
+            return
+
+        if filter is not None:
+            content = filter(content)
+        clazz.comment = content.splitlines()
+        clazz.status = "new"
 
     def commentify_method(
         self, code: Code, method: Method, filter: Callable[[str], str] | None = None
@@ -69,12 +74,16 @@ class LLMOpenAI(LLMBase):
                 ),
             ]
         )
+
         content = retry(lambda: self._query(prompt))
-        if content is not None:
-            if filter is not None:
-                content = filter(content)
-            method.comment = content.splitlines()
-            method.status = "new"
+        if content is None:
+            return
+
+        if filter is not None:
+            content = filter(content)
+
+        method.comment = content.splitlines()
+        method.status = "new"
 
     def testify_method(
         self, code: Code, method: Method, filter: Callable[[str], str] | None = None
@@ -87,16 +96,20 @@ class LLMOpenAI(LLMBase):
                 ),
             ]
         )
+
         content = retry(lambda: self._query(prompt))
-        if content is not None:
-            if filter is not None:
-                content = filter(content)
-            method.test = content.splitlines()
-            method.status = "new"
+        if content is None:
+            return
+
+        if filter is not None:
+            content = filter(content)
+
+        method.test = content.splitlines()
+        method.status = "new"
 
     def _query(self, prompt: str, temperature: float = 0) -> str | None:
         response = openai.ChatCompletion.create(
-            engine="chat_gpt",
+            engine=OPENAI_ENGINE,
             messages=[{"role": "user", "content": prompt}],
             temperature=temperature,
             max_tokens=800,
