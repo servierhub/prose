@@ -27,7 +27,7 @@ class Prose:
         file = self.file_repo.find(path)
         if file is None:
             file = File.of(path)
-        logging.info(f"Processing {file.path} ...")
+        logging.info(f"Parsing {file.path} ...")
 
         code = Code(file)
         if not code.load():
@@ -36,8 +36,8 @@ class Prose:
         self.parser.parse(code)
 
         for method in file.methods:
-            logging.info(f"Processing method {method.name} ...")
             if method.comment is None:
+                logging.info(f"Processing method {method.name} ...")
                 self.llm.commentify_method(code, method)
             if method.test is None:
                 self.llm.testify_method(
@@ -66,15 +66,16 @@ class Prose:
             sys.exit(0)
         self.parser.parse(code)
 
+        self.merger.merge_test(code, file)
         self.merger.merge_code(code, file)
 
     def main(self, argv):
         merge_mode = False
 
-        opts, _ = getopt.getopt(argv, "hm", ["merge"])
+        opts, _ = getopt.getopt(argv, "hmi", ["merge", "inplace"])
         for opt, _ in opts:
             if opt == "-h":
-                print("prose.py [--merge]")
+                print("prose.py [--merge] [--inplace]")
                 return 1
             elif opt in ("-m", "--merge"):
                 merge_mode = True
@@ -101,5 +102,5 @@ class Prose:
 
 
 if __name__ == "__main__":
-    app = Prose()
-    sys.exit(app.main(sys.argv[1:]))  # type: ignore
+    prose = Prose()
+    sys.exit(prose.main(sys.argv[1:]))  # type: ignore

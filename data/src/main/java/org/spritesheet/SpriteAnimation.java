@@ -3,11 +3,12 @@ package org.spritesheet;
 import processing.core.*;
 
 /**
- * The SpriteAnimation class represents an animation made up of a series of
- * frames. It allows for the display of individual frames at specified
- * coordinates and dimensions. The animation can be played at a desired frame
- * rate and can be reset to the beginning. The class also includes a method to
- * update the current frame based on the frame rate.
+ * The SpriteAnimation class represents an animation made up of a sequence of
+ * images. It allows for the creation of a new SpriteAnimation object with the
+ * given data and frame rate. The frame counter can be reset to rewind the
+ * animation, and images can be displayed at specified coordinates and
+ * dimensions. The frame count is incremented and the current frame is updated
+ * if the frame count exceeds the frame rate.
  */
 public class SpriteAnimation implements PConstants {
     /**
@@ -16,7 +17,6 @@ public class SpriteAnimation implements PConstants {
      * @param data      the array of PImage objects representing the frames of the
      *                  animation
      * @param frameRate the desired frame rate of the animation
-     *
      * @return a new SpriteAnimation object
      */
     public SpriteAnimation(PImage[] data, int frameRate) {

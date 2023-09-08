@@ -69,10 +69,10 @@ public class SpriteSheet {
     }
 
 	/**
-	 * Prints "Hello the world" to the console.
+	 * Prints "hello the world" to the console.
 	 */
     public void hello() {
-        System.out.println("Hello the world");
+        System.out.println("hello the world");
     }
 
     private int spriteWidth;
