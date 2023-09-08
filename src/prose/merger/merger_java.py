@@ -31,8 +31,7 @@ class MergerJava(MergerBase):
         if file.clazz is None:
             return
 
-        if file.clazz.status != "review":
-            return
+        regenerate_tests = False
 
         package = code.get_str_at((0, 0))
         class_name = f"Test_{file.clazz.name}"
@@ -50,11 +49,13 @@ class MergerJava(MergerBase):
         for method in file.methods:
             if method.test is not None and method.status == "review":
                 self._emit_test(src_lines, method.test)
+                regenerate_tests = True
         src_lines.append("}\n")
 
-        file_path =file.path.replace("main", "test").replace(file.clazz.name, class_name)
-        with open(file_path, "w") as f:
-            f.writelines(src_lines)
+        if regenerate_tests:
+            file_path =file.path.replace("main", "test").replace(file.clazz.name, class_name)
+            with open(file_path, "w") as f:
+                f.writelines(src_lines)
 
     def _find_code_line(
         self, code: Code, start_point: tuple[int, int], src_lines: list[str]

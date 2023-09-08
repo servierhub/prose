@@ -57,13 +57,13 @@ public class Test_SpriteSheet
 	    
 	    // Set the width and height of the mock data
 	    int dataWidth = 100;
-	    int dataHeight = 200;
+	    int dataHeight = 100;
 	    Mockito.when(mockData.width).thenReturn(dataWidth);
 	    Mockito.when(mockData.height).thenReturn(dataHeight);
 	    
 	    // Set the sprite width and height
 	    int spriteWidth = 10;
-	    int spriteHeight = 20;
+	    int spriteHeight = 10;
 	    
 	    // Create an instance of the class under test
 	    YourClass yourClass = new YourClass(mockData, spriteWidth, spriteHeight);
@@ -99,6 +99,6 @@ public class Test_SpriteSheet
 	    
 	    hello();
 	    
-	    assertEquals("hello the world\n", outContent.toString());
+	    assertEquals("Hello the world\n", outContent.toString());
 	}
 }

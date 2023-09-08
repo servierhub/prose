@@ -76,7 +76,7 @@ class Prose:
         for opt, _ in opts:
             if opt == "-h":
                 print("prose.py [--merge] [--inplace]")
-                return 1
+                return 0
             elif opt in ("-m", "--merge"):
                 merge_mode = True
 
@@ -91,14 +91,14 @@ class Prose:
         self.file_repo.save("prose.json")
         if found_something_new:
             logging.error("Found new comments and tests, abort!")
-            return 0
+            return 1
 
         if merge_mode:
             for file in self.file_repo.findall():
                 self.merge_one_file(file)
             self.file_repo.save("prose.json")
 
-        return 1
+        return 0
 
 
 if __name__ == "__main__":

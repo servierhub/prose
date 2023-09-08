@@ -26,12 +26,14 @@ public class SpriteSheetLibrary {
      * Loads a sprite sheet from an image file.
      *
      * This method creates a new SpriteSheet object using the specified sprite width
-     * and height, and the image file located at the given file path.
+     * and height, and loads the image file from the given file path using the
+     * Sketch.loadImage() method from the SpriteSheetLibrary class.
      *
      * @param imageFilePath the file path of the image file to load
      * @param spriteWidth   the width of each sprite in the sprite sheet
      * @param spriteHeight  the height of each sprite in the sprite sheet
-     * @return a new SpriteSheet object loaded from the image file
+     * @return a new SpriteSheet object with the specified sprite width, height, and
+     *         loaded image
      */
     public SpriteSheet loadSpriteSheet(String imageFilePath, int spriteWidth, int spriteHeight) {
         return new SpriteSheet(spriteWidth, spriteHeight, SpriteSheetLibrary.Sketch.loadImage(imageFilePath));
