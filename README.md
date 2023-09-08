@@ -14,16 +14,15 @@ without documentation or tests. Additionally, Prose collects all information and
 
 - Support OpenAI
     - Documentation: OK
-    - Tests: OK
-    - Code Generation: TBD
+    - Test generation: OK
 - Support Java
     - Documentation: OK (JAVADOC)
-    - Tests: OK (JUNIT)
+    - Test generation: In progress (JUNIT)
 - Support Python
     - Documentation: TBD
-    - Tests: TBD
+    - Test generation: TBD
 - Support Behave
-    - Code generation: TBD
+    - Test generation: TBD
 - Support Poetry
     - Documentation: TBD
 - Support Maven
