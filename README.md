@@ -6,7 +6,7 @@ tree.
 ## Intro
 
 Prose is a tool to document and generate tests for Java and Python projects using LLM. It allows for easy addition of
-new languages and LLM systems, such as Azure OpenARI (as the default). Prose parses source code and generates comments
+new languages and LLM systems, such as Azure OpenAI (as the default). Prose parses source code and generates comments
 and tests incrementally. Prose can also be integrated into a CI/CD pipeline and halt if there are classes or methods
 without documentation or tests. Additionally, Prose collects all information and adds a summary to the README file.
 
@@ -17,8 +17,8 @@ without documentation or tests. Additionally, Prose collects all information and
     - Tests: OK
     - Code Generation: TBD
 - Support Java
-    - Documentation: OK
-    - Tests: OK
+    - Documentation: OK (JAVADOC)
+    - Tests: OK (JUNIT)
 - Support Python
     - Documentation: TBD
     - Tests: TBD
@@ -29,7 +29,7 @@ without documentation or tests. Additionally, Prose collects all information and
 - Support Maven
      - Documentation: TBD
 
-## How it works?
+## How does it work?
 
 Prose works in 3 steps:
 
@@ -71,7 +71,7 @@ Step 2 - Review the prose.json with your favorite editor
                 " * It takes an array of strings representing command line arguments as a parameter.",
                 " */"
             ],
-            "status": "final"
+            "status": "review"
         },
         "methods": [
             {
@@ -118,7 +118,7 @@ Step 2 - Review the prose.json with your favorite editor
                     "    assertEquals(0, result);",
                     "}"
                 ],
-                "status": "final"
+                "status": "review"
             },
             {
                 "name": "main",
@@ -168,7 +168,7 @@ Step 2 - Review the prose.json with your favorite editor
                     "    assertEquals(-15, result3);",
                     "}"
                 ],
-                "status": "final"
+                "status": "review"
             }
         ]
     }
