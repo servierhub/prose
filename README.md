@@ -177,7 +177,7 @@ Step 2 - Review the prose.json with your favorite editor
 Step 3 - Merge the final comments and tests in place (of a folder can be given to copy the source tree)
 
 ```bash
-prose merge --in-place
+prose merge --inplace
 ```
 
 ### Requirements

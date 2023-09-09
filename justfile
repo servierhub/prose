@@ -17,4 +17,4 @@ compile:
     poetry run python src/prose parse --src="data/src/main/java/"
 
 merge:
-    poetry run python src/prose merge --in-place
+    poetry run python src/prose merge --inplace
