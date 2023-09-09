@@ -14,19 +14,19 @@ class Main:
     without documentation or tests. Additionally, Prose collects all information and adds a summary to the README file.
     """
 
-    def parse(self) -> None:
+    def parse(self, src: str) -> None:
         """Parses a tree source, collects non documented classes and methods and proposes comments and tests using LLM."""
-        prose = Prose()
-        prose.parse()
+        with Prose() as prose:
+            prose.parse(src)
 
-    def merge(self, inplace: bool = False) -> None:
+    def merge(self, in_place: bool = False) -> None:
         """Merges all comments and tests marked "review" into the source code.
 
         Args:
             inplace (bool): modify the source code in place, otherwise create a copy.
         """
-        prose = Prose()
-        prose.merge(inplace)
+        with Prose() as prose:
+            prose.merge(in_place)
 
 
 if __name__ == "__main__":

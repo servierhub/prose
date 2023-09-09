@@ -9,7 +9,7 @@ from prose.parser.code import Code
 from prose.domain.clazz import Class
 from prose.domain.method import Method
 from prose.parser.parser_java import JAVA_DOC_FRAMEWORK, JAVA_TEST_FRAMEWORK
-from prose.util.util import retry
+from prose.util.util import panic, retry
 
 OPENAI_ENGINE = "chat_gpt"
 
@@ -54,9 +54,9 @@ class LLMOpenAI(LLMBase):
             + ["\n".join(method.comment or []) + "\n" for method in methods]
         )
 
-        content = retry(lambda: self._query(prompt))
+        content = retry(self._query, prompt)
         if content is None:
-            return
+            return panic("I/O Error: Could not retreive OpenAI response, abort!")
 
         if filter is not None:
             content = filter(content)
@@ -69,15 +69,13 @@ class LLMOpenAI(LLMBase):
         prompt = "\n".join(
             [
                 PROMPT_DOCUMENT_METHOD,
-                code.get_block_between(
-                    method.start_point, method.end_point, show_line_numbers=False
-                ),
+                code.get_block_between(method.start_point, method.end_point),
             ]
         )
 
-        content = retry(lambda: self._query(prompt))
+        content = retry(self._query, prompt)
         if content is None:
-            return
+            return panic("I/O Error: Could not retreive OpenAI response, abort!")
 
         if filter is not None:
             content = filter(content)
@@ -91,15 +89,13 @@ class LLMOpenAI(LLMBase):
         prompt = "\n".join(
             [
                 PROMPT_UNIT_TEST,
-                code.get_block_between(
-                    method.start_point, method.end_point, show_line_numbers=False
-                ),
+                code.get_block_between(method.start_point, method.end_point),
             ]
         )
 
-        content = retry(lambda: self._query(prompt))
+        content = retry(self._query, prompt)
         if content is None:
-            return
+            return panic("I/O Error: Could not retreive OpenAI response, abort!")
 
         if filter is not None:
             content = filter(content)

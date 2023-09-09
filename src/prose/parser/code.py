@@ -1,6 +1,7 @@
 from io import StringIO
 
 from prose.domain.file import File
+from prose.util.util import panic
 
 
 class Code:
@@ -8,13 +9,12 @@ class Code:
         self.file = file
         self.src_lines: list[str] | None = None
 
-    def load(self) -> bool:
+    def load(self) -> None:
         try:
             with open(self.file.path, "r") as f:
                 self.src_lines = f.readlines()
-                return True
         except IOError:
-            return False
+            panic(f"I/O Error: could not load the file '{self.file.path}'")
 
     def get_str_at(self, point: tuple[int, int]) -> str | None:
         if self.src_lines is None:
@@ -43,7 +43,7 @@ class Code:
         self,
         start_point: tuple[int, int],
         end_point: tuple[int, int],
-        show_line_numbers=True,
+        show_line_numbers=False
     ) -> str:
         start_y, _ = start_point
         end_y, _ = end_point

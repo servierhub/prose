@@ -1,3 +1,5 @@
+from collections.abc import Iterable
+
 from tree_sitter import Language, Parser, TreeCursor
 
 from prose.parser.code import Code
@@ -15,6 +17,9 @@ class ParserJava(ParserBase):
     def __init__(self):
         self.parser = Parser()
         self.parser.set_language(JAVA_LANGUAGE)
+
+    def filter(self, files: list[str]) -> Iterable[str]:
+        return filter(lambda x: x.endswith(".java"), files)
 
     def parse(self, code: Code) -> None:
         tree = self.parser.parse(lambda _, p: code.get_bytes_at(p))  # type: ignore
