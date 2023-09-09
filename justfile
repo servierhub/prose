@@ -14,7 +14,7 @@ install:
     poetry install
 
 compile:
-    poetry run python src/prose parse --src="data/src/main/java"
+    poetry run python src/prose parse --src="data/src/main/java/"
 
 merge:
     poetry run python src/prose merge --in-place

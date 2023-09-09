@@ -34,9 +34,9 @@ class Prose:
     def parse(self, src_path: str) -> None:
         all_file_pathes = self._collect_file_pathes(src_path)
         all_results = map(self._parse_one_file, all_file_pathes)
-        has_some_new = reduce(operator.or_, all_results)
+        has_some_new = reduce(operator.or_, all_results, False)
         if has_some_new:
-            panic("Found some undecoumented or untested methods, abort!")
+            panic("Found some undocumented or untested methods, abort!")
 
     def merge(self, inplace: bool) -> None:
         for file in self.file_repo.findall():

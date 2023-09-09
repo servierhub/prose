@@ -12,41 +12,41 @@ without documentation or tests. Additionally, Prose collects all information and
 
 ## Feature overview
 
-- Support OpenAI
-    - Documentation: OK
-    - Test generation: OK
-- Support Java
-    - Documentation: OK (JAVADOC)
-    - Test generation: In progress (JUNIT)
-- Support Python
-    - Documentation: TBD
-    - Test generation: TBD
-- Support Behave
-    - Test generation: TBD
-- Support Poetry
-    - Documentation: TBD
-- Support Maven
-     - Documentation: TBD
+-   Support OpenAI
+    -   Documentation: OK
+    -   Test generation: OK
+-   Support Java
+    -   Documentation: OK (JAVADOC)
+    -   Test generation: In progress (JUNIT)
+-   Support Python
+    -   Documentation: TBD
+    -   Test generation: TBD
+-   Support Behave
+    -   Test generation: TBD
+-   Support Poetry
+    -   Documentation: TBD
+-   Support Maven
+    -   Documentation: TBD
 
 ## How does it work?
 
 Prose works in 3 steps:
 
-- Step 1: Prose parses a tree source, collects non documented classes and methods and proposes comments and tests using
-LLM. The sources are not modified. The comments and tests are saved in a prose.json file with a status "new".
-If any "new" are found, Prose warns the developper and terminates in error, otherwise, terminates without error silently.
+-   Step 1: Prose parses a tree source, collects non documented classes and methods and proposes comments and tests using
+    LLM. The sources are not modified. The comments and tests are saved in a prose.json file with a status "new".
+    If any "new" are found, Prose warns the developper and terminates in error, otherwise, terminates without error silently.
 
-- Step 2: the developer checks the prose.json for status "new", check and corrects the proposed comments and tests and
-then change the status as "final".
+-   Step 2: the developer checks the prose.json for status "new", check and corrects the proposed comments and tests and
+    then change the status as "final".
 
-- Step 3: the tool reruns in merge mode all comments and tests marked "review".
+-   Step 3: the tool reruns in merge mode all comments and tests marked "review".
 
 ## Getting Started
 
 Step 1 - Generate the prose.json collecting classes and methods within the src folder and documenting them
 
 ```bash
-prose --generate src
+prose parse --src="data/"
 ```
 
 Step 2 - Review the prose.json with your favorite editor
@@ -177,7 +177,7 @@ Step 2 - Review the prose.json with your favorite editor
 Step 3 - Merge the final comments and tests in place (of a folder can be given to copy the source tree)
 
 ```bash
-prose --merge --inplace
+prose merge --in-place
 ```
 
 ### Requirements
@@ -188,7 +188,7 @@ TBD by Prose
 
 Use git to clone this repository into your computer.
 
-```
+```bash
 git clone https://gitlab.com/romualdrousseau/prose.git
 ```
 
@@ -209,4 +209,3 @@ TBD
 ## Conclusion
 
 TBD
-
