@@ -90,7 +90,7 @@ class ParserJava(ParserBase):
             method.start_point = method_start_point
             method.end_point = method_end_point
 
-        # Find the next method
+        # Go to the next method
         cursor.goto_next_sibling()
 
         return True
