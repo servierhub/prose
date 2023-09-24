@@ -36,23 +36,26 @@ class MergerJava(MergerBase):
         package = code.get_str_at((0, 0))
         class_name = f"Test_{file.clazz.name}"
 
-        src_lines = [
-            package,
-            "\n"
-            "import junit.framework.Test;\n",
-            "import junit.framework.TestCase;\n",
-            "import junit.framework.TestSuite;\n",
-            "\n"
-            f"public class {class_name}\n",
-            "{\n"
-        ]
         for method in file.methods:
             if method.test is not None and method.status == "review":
-                self._emit_test(src_lines, method.test)
                 regenerate_tests = True
-        src_lines.append("}\n")
 
         if regenerate_tests:
+            src_lines = [
+                package,
+                "\n"
+                "import junit.framework.Test;\n",
+                "import junit.framework.TestCase;\n",
+                "import junit.framework.TestSuite;\n",
+                "\n"
+                f"public class {class_name}\n",
+                "{\n"
+            ]
+            for method in file.methods:
+                if method.test is not None:
+                    self._emit_test(src_lines, method.test)
+            src_lines.append("}\n")
+
             file_path =file.path.replace("main", "test").replace(file.clazz.name, class_name)
             with open(file_path, "w") as f:
                 f.writelines(src_lines)
