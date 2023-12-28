@@ -2,7 +2,7 @@ import os
 
 from typing import Callable
 
-import openai
+from openai import OpenAI
 
 from prose.llm.llm_base import LLMBase
 from prose.parser.code import Code
@@ -38,10 +38,11 @@ Do not include the import and class definition.
 
 class LLMOpenAI(LLMBase):
     def __init__(self):
-        openai.api_type = "azure"
-        openai.api_base = "https://openaidafa.openai.azure.com/"
-        openai.api_version = "2023-07-01-preview"
-        openai.api_key = os.getenv("OPENAI_API_KEY")
+        # openai.api_type = "azure"
+        # openai.api_base = "https://openaidafa.openai.azure.com/"
+        # openai.api_version = "2023-07-01-preview"
+        # openai.api_key = os.getenv("OPENAI_API_KEY")
+        self.client = OpenAI()
 
     def commentify_class(
         self,
@@ -104,14 +105,21 @@ class LLMOpenAI(LLMBase):
         method.status = "new"
 
     def _query(self, prompt: str, temperature: float = 0) -> str | None:
-        response = openai.ChatCompletion.create(
-            engine=OPENAI_ENGINE,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=temperature,
-            max_tokens=800,
-            top_p=0.95,
-            frequency_penalty=0,
-            presence_penalty=0,
-            stop=None,
-        )
-        return response["choices"][0]["message"]["content"]  # type: ignore
+        completion = self.client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a programmer to comment and test your code."},
+                {"role": "user", "content": prompt}
+            ])
+        return completion.choices[0].message.content
+        # response = openai.ChatCompletion.create(
+        #     engine=OPENAI_ENGINE,
+        #     messages=[{"role": "user", "content": prompt}],
+        #     temperature=temperature,
+        #     max_tokens=800,
+        #     top_p=0.95,
+        #     frequency_penalty=0,
+        #     presence_penalty=0,
+        #     stop=None,
+        # )
+        # return response["choices"][0]["message"]["content"]  # type: ignore
