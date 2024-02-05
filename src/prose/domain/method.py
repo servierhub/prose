@@ -8,10 +8,11 @@ from dataclasses import asdict, dataclass
 class Method:
     name: str
     signature: str
-    digest: str
-    start_point: Tuple[int, int]
-    end_point: Tuple[int, int]
-    comment: List[str] | None
+    digest: str | None = None
+    start_point: Tuple[int, int] | None = None
+    end_point: Tuple[int, int] | None = None
+    has_llm_comment: bool = False
+    comment: List[str] | None = None
     tests: List[Tuple[str, Any]] | None = None
 
     def asdict(self) -> dict[str, Method]:

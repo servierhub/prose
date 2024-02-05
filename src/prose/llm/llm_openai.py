@@ -61,11 +61,16 @@ class LLMOpenAI(LLMBase):
 
         if filter is not None:
             content = filter(content)
+
+        clazz.has_llm_comment = True
         clazz.comment = content.splitlines()
 
     def commentify_method(
         self, code: Code, method: Method, filter: Callable[[str], str] | None = None
     ) -> None:
+        if method.start_point is None or method.end_point is None:
+            return
+
         prompt = "\n".join(
             [
                 PROMPT_DOCUMENT_METHOD,
@@ -80,11 +85,15 @@ class LLMOpenAI(LLMBase):
         if filter is not None:
             content = filter(content)
 
+        method.has_llm_comment = True
         method.comment = content.splitlines()
 
     def testify_method(
         self, code: Code, method: Method, filter: Callable[[str], str] | None = None
     ) -> None:
+        if method.start_point is None or method.end_point is None:
+            return
+
         prompt = "\n".join(
             [
                 PROMPT_UNIT_TEST,
@@ -101,8 +110,10 @@ class LLMOpenAI(LLMBase):
 
         method.tests = []
         for decorator, declaration, body in re.findall(EXTRACT_TEST_FUNC, content):
-            test_signature = "\n".join(decorator.splitlines() + declaration.splitlines())
-            test_code = decorator.splitlines() + declaration.splitlines() + body.splitlines()
+            decorator_trimmed = [x.strip() for x in decorator.splitlines()]
+            declaration_trimmed = [x.strip() for x in declaration.splitlines()]
+            test_signature = "\n".join(decorator_trimmed + declaration_trimmed)
+            test_code = decorator_trimmed + declaration_trimmed + body.splitlines()
             method.tests.append((test_signature, test_code))
 
     def _query(self, prompt: str, temperature: float = 0) -> str | None:

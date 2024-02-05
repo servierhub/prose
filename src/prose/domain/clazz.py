@@ -9,9 +9,10 @@ from prose.domain.method import Method
 class Class:
     name: str
     signature: str
-    digest: str
-    start_point: tuple[int, int]
-    end_point: tuple[int, int]
+    digest: str | None = None
+    start_point: tuple[int, int] | None = None
+    end_point: tuple[int, int] | None = None
+    has_llm_comment: bool = False
     comment: list[str] | None = None
     methods: list[Method] = field(default_factory=list)
 

@@ -4,9 +4,9 @@ import json
 import operator
 
 from tqdm import tqdm
-from itertools import chain
-from typing import Iterable, Tuple
+from prose.domain.clazz import Class
 from prose.domain.commit_object import CommitObject
+from prose.domain.method import Method
 from prose.domain.prose_object import ProseObject
 
 from prose.llm.llm_openai import LLMOpenAI
@@ -34,88 +34,118 @@ class Prose:
 
     def parse(self, src_path: str) -> None:
         digest_objects = {}
-        commit = CommitObject("", changes=[])
         for args in os.walk(src_path, topdown=False):
-            digest_objects, commit = self._build_tree(src_path, digest_objects, commit, *args)
+            digest_objects = self._build_tree_objects(digest_objects, *args)
 
-        if len(commit.changes) > 0:
+        tree_root_object = digest_objects.get("")
+        if tree_root_object is not None:
+            commit = CommitObject(tree_root_object)
             commit_digest = get_digest_object(commit.asdict())
             self.file_repo.save_object(commit_digest, commit.asdict())
             self.file_repo.save_ref("main", commit_digest)
             panic("Found some undocumented or untested methods, abort!")
 
-
     def merge(self, inplace: bool) -> None:
         for file in self.file_repo.findall():
             self._merge_one_file(file, inplace)
 
-    def _build_tree(self, src_path: str, digest_objects: dict, commit: CommitObject, root: str, folders: list[str], files: list[str]) -> Tuple[dict, CommitObject]:
+    def _build_tree_objects(
+        self, digest_objects: dict, root: str, folders: list[str], files: list[str]
+    ) -> dict:
         if folders == [] and files == []:
-            return digest_objects, commit
+            return digest_objects
 
         parent_object = os.path.basename(root)
 
         content = []
         for folder in folders:
             if digest_objects.get(folder) is not None:
-                content.append(ProseObject("tree", digest_objects[folder], folder).asdict())
+                content.append(
+                    ProseObject("tree", digest_objects[folder], folder).asdict()
+                )
 
         for file in files:
             file_digest = get_digest_file(os.path.join(root, file))
             content.append(ProseObject("file", file_digest, file).asdict())
 
-            if not self.file_repo.exists_object(file_digest):
-                file_object = self._parse_one_file(os.path.join(root, file))
-                file_content = []
+            if self.file_repo.exists_object(file_digest):
+                continue
 
-                if file_object.clazz is not None:
-                    file_content.append(ProseObject("clazz", file_object.clazz.digest, file_object.clazz.name).asdict())
+            file_object = self._parse_one_file(os.path.join(root, file))
 
-                    if not self.file_repo.exists_object(file_object.clazz.digest):
-                        clazz_content = []
+            if file_object.clazz is None or file_object.clazz.digest is None:
+                continue
 
-                        if file_object.clazz.comment is not None:
-                                comment_content = "\n".join(file_object.clazz.comment)
-                                comment_digest = get_digest_string(comment_content)
-                                self.file_repo.save_object(comment_digest, comment_content)
-                                clazz_content.append(ProseObject("comment", comment_digest, file_object.clazz.name).asdict())
+            file_content = []
 
-                        self.file_repo.save_object(file_object.clazz.digest, clazz_content)
-                        commit.changes.append(file_object.clazz.digest)
+            file_content.append(
+                ProseObject(
+                    "clazz", file_object.clazz.digest, file_object.clazz.name
+                ).asdict()
+            )
 
-                    for method in file_object.clazz.methods:
-                        file_content.append(ProseObject("method", method.digest, method.name).asdict())
+            if not self.file_repo.exists_object(file_object.clazz.digest):
+                self._build_clazz_objects(file_object.clazz)
 
-                        if not self.file_repo.exists_object(method.digest):
-                            method_content = []
+            for method in file_object.clazz.methods:
+                if method.digest is None:
+                    continue
 
-                            if method.comment is not None:
-                                comment_content = "\n".join(method.comment)
-                                comment_digest = get_digest_string(comment_content)
-                                self.file_repo.save_object(comment_digest, comment_content)
-                                method_content.append(ProseObject("comment", comment_digest, method.signature).asdict())
+                file_content.append(
+                    ProseObject("method", method.digest, method.name).asdict()
+                )
 
-                            if method.tests is not None:
-                                for test in method.tests:
-                                    test_content = "\n".join(test[1])
-                                    test_digest = get_digest_string(test_content)
-                                    self.file_repo.save_object(test_digest, test_content)
-                                    method_content.append(ProseObject("test", test_digest, test[0]).asdict())
+                if not self.file_repo.exists_object(method.digest):
+                    self._build_method_objects(method)
 
-                            self.file_repo.save_object(method.digest, method_content)
-                            commit.changes.append(method.digest)
-
-                self.file_repo.save_object(file_digest, file_content)
+            self.file_repo.save_object(file_digest, file_content)
 
         content_digest = get_digest_object(content)
-
-        if os.path.relpath(root, src_path) == '.':
-            commit.tree = content_digest
-
         self.file_repo.save_object(content_digest, content)
 
         digest_objects[parent_object] = content_digest
-        return digest_objects, commit
+        return digest_objects
+
+    def _build_clazz_objects(self, clazz: Class):
+        if clazz.digest is None or clazz.comment is None or not clazz.has_llm_comment:
+            return
+
+        clazz_content = []
+
+        self._build_comment(clazz_content, clazz.name, clazz.comment)
+
+        self.file_repo.save_object(clazz.digest, clazz_content)
+
+    def _build_method_objects(self, method: Method):
+        if method.digest is None:
+            return
+
+        method_content = []
+
+        if method.has_llm_comment and method.comment is not None:
+            self._build_comment(method_content, method.signature, method.comment)
+
+        if method.tests is not None:
+            for test in method.tests:
+                self._build_test(method_content, test[0], test[1])
+
+        self.file_repo.save_object(method.digest, method_content)
+
+    def _build_comment(self, content, name, comment):
+        comment_content = "\n".join(comment)
+        comment_digest = get_digest_string(comment_content)
+        self.file_repo.save_object(comment_digest, comment_content)
+        content.append(
+            ProseObject("comment", comment_digest, name).asdict()
+        )
+
+    def _build_test(self, content, name, test):
+        test_content = "\n".join(test)
+        test_digest = get_digest_string(test_content)
+        self.file_repo.save_object(test_digest, test_content)
+        content.append(
+            ProseObject("test", test_digest, name).asdict()
+        )
 
     def _parse_one_file(self, path: str) -> File:
         print(f"Parsing {path}")
@@ -132,7 +162,7 @@ class Prose:
                         self.llm.commentify_class(file.clazz)
                 else:
                     method = file.clazz.methods[i]
-                    if not self.file_repo.exists_object(method.digest):
+                    if method.digest is not None and not self.file_repo.exists_object(method.digest):
                         if method.comment is None:
                             self.llm.commentify_method(code, method)
                         if method.tests is None:
