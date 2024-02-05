@@ -1,4 +1,4 @@
-import os
+import re
 
 from typing import Callable
 
@@ -35,6 +35,7 @@ Extract all generated methods and remove everything else.
 Do not include the import and class definition.
 """
 
+EXTRACT_TEST_FUNC = r"((?:@.+\n)+)([^@][^(]+\([^)]*\))\s*({\n[^@]*\n})\n"
 
 class LLMOpenAI(LLMBase):
     def __init__(self):
@@ -47,12 +48,11 @@ class LLMOpenAI(LLMBase):
     def commentify_class(
         self,
         clazz: Class,
-        methods: list[Method],
         filter: Callable[[str], str] | None = None,
     ) -> None:
         prompt = "\n".join(
-            [PROMPT_DOCUMENT_CLASS, "Class: " + clazz.name, ""]
-            + ["\n".join(method.comment or []) + "\n" for method in methods]
+            [PROMPT_DOCUMENT_CLASS, "Class: " + clazz.signature, ""]
+            + ["\n".join(method.comment or []) + "\n" for method in clazz.methods]
         )
 
         content = retry(self._query, prompt)
@@ -62,7 +62,6 @@ class LLMOpenAI(LLMBase):
         if filter is not None:
             content = filter(content)
         clazz.comment = content.splitlines()
-        clazz.status = "new"
 
     def commentify_method(
         self, code: Code, method: Method, filter: Callable[[str], str] | None = None
@@ -82,7 +81,6 @@ class LLMOpenAI(LLMBase):
             content = filter(content)
 
         method.comment = content.splitlines()
-        method.status = "new"
 
     def testify_method(
         self, code: Code, method: Method, filter: Callable[[str], str] | None = None
@@ -101,8 +99,11 @@ class LLMOpenAI(LLMBase):
         if filter is not None:
             content = filter(content)
 
-        method.test = content.splitlines()
-        method.status = "new"
+        method.tests = []
+        for decorator, declaration, body in re.findall(EXTRACT_TEST_FUNC, content):
+            test_signature = "\n".join(decorator.splitlines() + declaration.splitlines())
+            test_code = decorator.splitlines() + declaration.splitlines() + body.splitlines()
+            method.tests.append((test_signature, test_code))
 
     def _query(self, prompt: str, temperature: float = 0) -> str | None:
         completion = self.client.chat.completions.create(

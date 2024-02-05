@@ -1,4 +1,6 @@
+import json
 import sys
+import hashlib
 
 from time import sleep
 from typing import Callable, TypeVar
@@ -47,3 +49,16 @@ def panic(msg: str) -> None:
         file=sys.stderr
     )
     sys.exit(1)
+
+
+def get_digest_string(s: str) -> str:
+    return hashlib.sha256(s.encode('UTF-8')).hexdigest()
+
+
+def get_digest_object(s: dict | list[dict] | list[str]) -> str:
+    return hashlib.sha256(json.dumps(s).encode('UTF-8')).hexdigest()
+
+
+def get_digest_file(filename: str) -> str:
+    with open(filename, 'rb', buffering=0) as f:
+        return hashlib.file_digest(f, 'sha256').hexdigest() # type: ignore

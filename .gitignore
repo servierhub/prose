@@ -163,5 +163,6 @@ cython_debug/
 .vscode/
 
 # Prose project settings
+.prose/
 prose.json
 data/src/

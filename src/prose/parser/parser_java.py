@@ -1,3 +1,5 @@
+import re
+
 from collections.abc import Iterable
 
 from tree_sitter import Language, Parser, TreeCursor
@@ -7,11 +9,20 @@ from prose.parser.parser_base import ParserBase
 from prose.domain.file import File
 from prose.domain.clazz import Class
 from prose.domain.method import Method
+from prose.util.util import get_digest_string
 
 JAVA_LANGUAGE = Language("build/grammar.so", "java")
 JAVA_DOC_FRAMEWORK = "JAVADOC"
 JAVA_TEST_FRAMEWORK = "JUNIT"
 
+JAVA_IDENTIFIER = ["identifier"]
+JAVA_BLOCK_COMMENT = ["block_comment"]
+JAVA_CLASS_DECLARATION = ["class_declaration"]
+JAVA_CLASS_BODY = ["class_body"]
+JAVA_METHOD_DECLARATION = ["constructor_declaration", "method_declaration"]
+JAVA_METHOD_BODY = ["constructor_body", "block"]
+
+JAVA_IS_JAVADOC = r"^\s*\/\*\*\n(\s*\*.*\n)+\s*\*\/"
 
 class ParserJava(ParserBase):
     def __init__(self):
@@ -32,63 +43,107 @@ class ParserJava(ParserBase):
         # Go inside program
         cursor.goto_first_child()
 
-        # Find the first class
-        while cursor.node.type != "class_declaration":
+        # Find the class declaration
+        while cursor.node.type not in JAVA_CLASS_DECLARATION:
             cursor.goto_next_sibling()
-        class_start_point = cursor.node.start_point
-        class_end_point = cursor.node.end_point
-        cursor.goto_first_child()
+        clazz_start_point = cursor.node.start_point
+        clazz_end_point = cursor.node.end_point
 
-        # Find the class identifier
-        while cursor.node.type != "identifier":
-            cursor.goto_next_sibling()
-        class_name = (
-            code.get_str_between(cursor.node.start_point, cursor.node.end_point)
-            or "unknown"
-        )
+        child_cursor = cursor.copy()
+        child_cursor.goto_first_child()
+        signature_start_point = child_cursor.node.start_point
 
-        if file.clazz is None or file.clazz.name != class_name:
-            file.clazz = Class(class_name, class_start_point, class_end_point)
+        # Find the class name
+        while child_cursor.node.type not in JAVA_IDENTIFIER:
+            child_cursor.goto_next_sibling()
+        name_start_point = child_cursor.node.start_point
+        name_end_point =  child_cursor.node.end_point
+
+        # Find the class signature
+        while child_cursor.node.type not in JAVA_CLASS_BODY:
+            child_cursor.goto_next_sibling()
+        child_cursor.goto_previous_sibling()
+        signature_end_point = child_cursor.node.end_point
+
+        # Collect class info
+        clazz_name = code.get_str_between(name_start_point, name_end_point) or ""
+        clazz_signature = code.get_block_between(signature_start_point, signature_end_point) or ""
+        clazz_code = code.get_block_between(clazz_start_point, clazz_end_point) or ""
+        clazz_digest = get_digest_string(clazz_code)
+
+        # Add class to file
+        if file.clazz is None or file.clazz.signature != clazz_signature:
+            file.clazz = Class(clazz_name, clazz_signature, clazz_digest, clazz_start_point, clazz_end_point)
         else:
-            file.clazz.start_point = class_start_point
-            file.clazz.end_point = class_end_point
+            file.clazz.digest = clazz_digest
+            file.clazz.start_point = clazz_start_point
+            file.clazz.end_point = clazz_end_point
 
         # Find the class body
-        while cursor.node.type != "class_body":
+        cursor.goto_first_child()
+        while cursor.node.type not in JAVA_CLASS_BODY:
             cursor.goto_next_sibling()
         cursor.goto_first_child()
 
     def _parse_method(self, code: Code, cursor: TreeCursor, file: File) -> bool:
-        # Find the next method if any
-        hasSibling = True
-        while hasSibling and not (cursor.node.type in ("constructor_declaration", "method_declaration")):
-            hasSibling = cursor.goto_next_sibling()
-        if not hasSibling:
+        if file.clazz is None:
             return False
 
+        # Find the next method declaration with its comment if any
+        comment_start_point = None
+        comment_end_point = None
+        has_sibling = True
+        while has_sibling and cursor.node.type not in JAVA_METHOD_DECLARATION:
+            if cursor.node.type in JAVA_BLOCK_COMMENT:
+                comment_start_point = cursor.node.start_point
+                comment_end_point = cursor.node.end_point
+            else:
+                comment_start_point = None
+                comment_end_point = None
+            has_sibling = cursor.goto_next_sibling()
+        if not has_sibling:
+            return False
         method_start_point = cursor.node.start_point
         method_end_point = cursor.node.end_point
 
-        # Find the method identifier
         child_cursor = cursor.copy()
         child_cursor.goto_first_child()
-        while child_cursor.node.type != "identifier":
-            child_cursor.goto_next_sibling()
-        method_name = (
-            code.get_str_between(
-                child_cursor.node.start_point, child_cursor.node.end_point
-            )
-            or "unknown"
-        )
+        signature_start_point = child_cursor.node.start_point
 
-        method = next(filter(lambda x: x.name == method_name, file.methods), None)
+        # Find the method name
+        while child_cursor.node.type not in JAVA_IDENTIFIER:
+            child_cursor.goto_next_sibling()
+        name_start_point = child_cursor.node.start_point
+        name_end_point =  child_cursor.node.end_point
+
+        # Find the method signature
+        while child_cursor.node.type not in JAVA_METHOD_BODY:
+            child_cursor.goto_next_sibling()
+        child_cursor.goto_previous_sibling()
+        signature_end_point = child_cursor.node.end_point
+
+        # Collect method info
+        method_name = code.get_str_between(name_start_point, name_end_point) or ""
+        method_signature = code.get_block_between(signature_start_point, signature_end_point) or ""
+        method_code = code.get_block_between(method_start_point, method_end_point) or ""
+        method_digest = get_digest_string(method_code)
+
+        method_comment = None
+        if comment_start_point is not None and comment_end_point is not None:
+            comment = code.get_block_between(comment_start_point, comment_end_point)
+            if re.search(JAVA_IS_JAVADOC, comment) is not None:
+                method_comment = comment.splitlines()
+
+        # Add method to file
+        method = next(filter(lambda x: x.signature == method_signature, file.clazz.methods), None)
         if method is None:
-            file.methods.append(
-                Method(method_name, method_start_point, method_end_point)
-            )
+            method = Method(method_name, method_signature, method_digest, method_start_point, method_end_point, method_comment)
+            file.clazz.methods.append(method)
         else:
+            method.digest = method_digest
             method.start_point = method_start_point
             method.end_point = method_end_point
+            method.comment = method_comment
 
         # Go to the next method
         cursor.goto_next_sibling()
