@@ -7,6 +7,7 @@ from prose.merger.merger_java import MergerJava
 from prose.parser.code import Code
 from prose.parser.parser_java import ParserJava
 from prose.tree.tree_builder import TreeBuilder
+from prose.tree.tree_walker import TreeWalver
 from prose.util.util import get_digest_object, panic
 
 class Prose:
@@ -23,12 +24,17 @@ class Prose:
     def __exit__(self, *_):
         self.file_repo.save("prose.json")
 
-    def parse(self, src_path: str) -> None:
+    def log(self) -> None:
+        TreeWalver().walk()
+
+    def cat(self, digest: str) -> None:
+        TreeWalver().cat(digest)
+
+    def add(self, src_path: str) -> None:
         tree_root =  TreeBuilder().build(src_path)
         if tree_root is not None:
-            commit_content = CommitObject(tree_root).asdict()
-            commit_digest = get_digest_object(commit_content)
-            self.file_repo.save_blob(commit_digest, commit_content)
+            commit_content = CommitObject(tree_root)
+            commit_digest = self.file_repo.save_blob(commit_content)
             self.file_repo.save_ref("main", commit_digest)
             panic("Found some undocumented or untested methods, abort!")
 

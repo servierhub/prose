@@ -14,6 +14,30 @@ class Main:
     without documentation or tests. Additionally, Prose adds a summary to the README file.
     """
 
+    def log(self) -> None:
+        """Parses a source tree.
+
+        Prose collects undocumented classes and methods, proposes comments and tests using LLM. Prose aborts if some
+        undocumented or untested classes or methods are found.
+
+        Args:
+            src (str): the source tree to parse.
+        """
+        with Prose() as prose:
+            prose.log()
+
+    def cat(self, digest: str) -> None:
+        """Parses a source tree.
+
+        Prose collects undocumented classes and methods, proposes comments and tests using LLM. Prose aborts if some
+        undocumented or untested classes or methods are found.
+
+        Args:
+            src (str): the source tree to parse.
+        """
+        with Prose() as prose:
+            prose.cat(digest)
+
     def add(self, src: str = "src/") -> None:
         """Parses a source tree.
 
@@ -25,18 +49,6 @@ class Main:
         """
         with Prose() as prose:
             prose.add(src)
-
-    def parse(self, src: str = "src/") -> None:
-        """Parses a source tree.
-
-        Prose collects undocumented classes and methods, proposes comments and tests using LLM. Prose aborts if some
-        undocumented or untested classes or methods are found.
-
-        Args:
-            src (str): the source tree to parse.
-        """
-        with Prose() as prose:
-            prose.parse(src)
 
     def merge(self, inplace: bool = False) -> None:
         """Merges all comments and tests marked "review".

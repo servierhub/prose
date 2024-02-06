@@ -23,12 +23,15 @@ JAVA_METHOD_DECLARATION = ["constructor_declaration", "method_declaration"]
 JAVA_METHOD_BODY = ["constructor_body", "block"]
 
 JAVA_IS_JAVADOC = r"^\s*\/\*\*\n(\s*\*.*\n)+\s*\*\/"
-JAVA_IS_SPACE = r"\s+"
+JAVA_REMOVE_SPACE = r"\s+"
 
 class ParserJava(ParserBase):
     def __init__(self):
         self.parser = Parser()
         self.parser.set_language(JAVA_LANGUAGE)
+
+    def to_signature(self, code: str) -> str:
+        return re.sub(JAVA_REMOVE_SPACE, "", code)
 
     def filter(self, files: list[str]) -> Iterable[str]:
         return filter(lambda x: x.endswith(".java"), files)
@@ -55,7 +58,7 @@ class ParserJava(ParserBase):
 
         # Collect class info
         clazz_name = code.get_str_between(name_start_point, name_end_point) or ""
-        clazz_signature = re.sub(JAVA_IS_SPACE, "",
+        clazz_signature = (
             code.get_block_between(signature_start_point, signature_end_point) or ""
         )
         clazz_code = code.get_block_between(clazz_start_point, clazz_end_point) or ""
@@ -139,7 +142,7 @@ class ParserJava(ParserBase):
 
         # Collect method info
         method_name = code.get_str_between(name_start_point, name_end_point) or ""
-        method_signature = re.sub(JAVA_IS_SPACE, "",
+        method_signature = (
             code.get_block_between(signature_start_point, signature_end_point) or ""
         )
         method_code = code.get_block_between(method_start_point, method_end_point) or ""
