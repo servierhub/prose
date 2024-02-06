@@ -23,7 +23,7 @@ JAVA_METHOD_DECLARATION = ["constructor_declaration", "method_declaration"]
 JAVA_METHOD_BODY = ["constructor_body", "block"]
 
 JAVA_IS_JAVADOC = r"^\s*\/\*\*\n(\s*\*.*\n)+\s*\*\/"
-
+JAVA_IS_SPACE = r"\s+"
 
 class ParserJava(ParserBase):
     def __init__(self):
@@ -36,14 +36,12 @@ class ParserJava(ParserBase):
     def parse(self, code: Code) -> None:
         tree = self.parser.parse(lambda _, p: code.get_bytes_at(p))  # type: ignore
         cursor = tree.walk()
+        cursor.goto_first_child()
         self._parse_class(code, cursor, code.file)
         while self._parse_method(code, cursor, code.file):
             pass
 
     def _parse_class(self, code: Code, cursor: TreeCursor, file: File) -> None:
-        # Go inside program
-        cursor.goto_first_child()
-
         clazz_start_point, clazz_end_point, comment_start_point, comment_end_point = (
             self._parse_class_declaration(cursor)
         )
@@ -57,7 +55,7 @@ class ParserJava(ParserBase):
 
         # Collect class info
         clazz_name = code.get_str_between(name_start_point, name_end_point) or ""
-        clazz_signature = (
+        clazz_signature = re.sub(JAVA_IS_SPACE, "",
             code.get_block_between(signature_start_point, signature_end_point) or ""
         )
         clazz_code = code.get_block_between(clazz_start_point, clazz_end_point) or ""
@@ -109,8 +107,8 @@ class ParserJava(ParserBase):
         name_start_point, name_end_point = self._parse_identifier(cursor)
         while cursor.node.type not in JAVA_CLASS_BODY:
             cursor.goto_next_sibling()
-        cursor.goto_previous_sibling()
-        signature_end_point = cursor.node.end_point
+        assert cursor.node.prev_sibling is not None
+        signature_end_point = cursor.node.prev_sibling.end_point
         return (
             signature_start_point,
             signature_end_point,
@@ -141,7 +139,7 @@ class ParserJava(ParserBase):
 
         # Collect method info
         method_name = code.get_str_between(name_start_point, name_end_point) or ""
-        method_signature = (
+        method_signature = re.sub(JAVA_IS_SPACE, "",
             code.get_block_between(signature_start_point, signature_end_point) or ""
         )
         method_code = code.get_block_between(method_start_point, method_end_point) or ""
@@ -199,8 +197,8 @@ class ParserJava(ParserBase):
         name_start_point, name_end_point = self._parse_identifier(cursor)
         while cursor.node.type not in JAVA_METHOD_BODY:
             cursor.goto_next_sibling()
-        cursor.goto_previous_sibling()
-        signature_end_point = cursor.node.end_point
+        assert cursor.node.prev_sibling is not None
+        signature_end_point = cursor.node.prev_sibling.end_point
         return (
             signature_start_point,
             signature_end_point,
