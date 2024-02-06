@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 
 from dataclasses import dataclass, asdict
+from typing import Any
 
 from prose.domain.clazz import Class
 from prose.domain.method import Method
@@ -26,5 +27,5 @@ class File:
             file.clazz.methods = [Method(**x) for x in data["clazz"]["methods"]]
             return file
 
-    def asdict(self) -> dict[str, File]:
+    def asdict(self) -> dict[str, Any]:
         return asdict(self)

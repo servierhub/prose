@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Any, List, Tuple
 from dataclasses import asdict, dataclass
 
@@ -15,5 +13,5 @@ class Method:
     comment: List[str] | None = None
     tests: List[Tuple[str, Any]] | None = None
 
-    def asdict(self) -> dict[str, Method]:
+    def asdict(self) -> dict[str, Any]:
         return asdict(self)

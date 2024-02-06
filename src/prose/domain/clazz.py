@@ -1,6 +1,5 @@
-from __future__ import annotations
-
 from dataclasses import asdict, dataclass, field
+from typing import Any
 
 from prose.domain.method import Method
 
@@ -16,6 +15,6 @@ class Class:
     comment: list[str] | None = None
     methods: list[Method] = field(default_factory=list)
 
-    def asdict(self) -> dict[str, Class]:
+    def asdict(self) -> dict[str, Any]:
         return asdict(self)
 

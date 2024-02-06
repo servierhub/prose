@@ -45,13 +45,23 @@ class Code:
         end_point: tuple[int, int],
         show_line_numbers=False
     ) -> str:
-        start_y, _ = start_point
-        end_y, _ = end_point
+        start_y, start_x = start_point
+        end_y, end_x = end_point
+
+        if start_y == end_y:
+            line = self.get_str_at((start_y, 0)) or ""
+            return line[start_x:end_x]
+
         with StringIO() as buffer:
             for y in range(start_y, end_y + 1):
                 line = self.get_str_at((y, 0)) or ""
                 if show_line_numbers:
                     buffer.write(str(y).rjust(3, "0"))
                     buffer.write(" ")
-                buffer.write(line)
+                if y == start_y:
+                    buffer.write(line[start_x:])
+                elif y == end_y:
+                    buffer.write(line[:end_x])
+                else:
+                    buffer.write(line)
             return buffer.getvalue()

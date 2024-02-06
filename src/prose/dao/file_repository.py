@@ -56,7 +56,7 @@ class FileRepository:
         object_path = os.path.join(".prose", "objects", digest[:2], digest)
         return os.path.exists(object_path)
 
-    def save_object(self, digest: str, content: str | list[str] | dict | list[dict]) -> None:
+    def save_blob(self, digest: str, content: str | list[str] | dict | list[dict]) -> None:
         object_parent_path = os.path.join(".prose", "objects", digest[:2])
         os.makedirs(object_parent_path, exist_ok=True)
 
