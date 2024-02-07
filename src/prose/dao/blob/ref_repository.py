@@ -12,8 +12,9 @@ class RefRepository:
 
     def load(self, name: str) -> str | None:
         ref_path = os.path.join(".prose", "refs", name)
-        with open(ref_path, "r") as f:
-            return f.read()
+        if os.path.exists(ref_path):
+            with open(ref_path, "r") as f:
+                return f.read()
 
     def save(self, name: str, content: str) -> None:
         refs_path = os.path.join(".prose", "refs")

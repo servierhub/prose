@@ -30,8 +30,7 @@ class CommitRepository:
         os.makedirs(object_parent_path, exist_ok=True)
 
         object_path = os.path.join(object_parent_path, digest)
-        if not os.path.exists(object_path):
-            with open(object_path, "w") as f:
-                f.write(jsbeautifier.beautify(json.dumps(content.asdict())))
+        with open(object_path, "w") as f:
+            f.write(jsbeautifier.beautify(json.dumps(content.asdict())))
 
         return digest

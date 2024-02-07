@@ -1,13 +1,14 @@
 from prose.dao.blob.blob_repository import BlobRepository
 from prose.dao.blob.commit_repository import CommitRepository
 from prose.dao.blob.ref_repository import RefRepository
+from prose.dao.blob.stage_repository import StageRepository
 from prose.dao.blob.tree_repository import TreeRepository
 from prose.domain.blob.tree import Tree
 
 
 class TreeWalker:
     def __init__(self):
-        self.ref_repo = RefRepository()
+        self.stage_repo = StageRepository()
         self.commit_repo = CommitRepository()
         self.tree_repo = TreeRepository()
         self.blob_repo = BlobRepository()
@@ -16,17 +17,14 @@ class TreeWalker:
         print(self.blob_repo.load(digest))
 
     def walk(self) -> None:
-        commit_digest = self.ref_repo.load("main")
-        if commit_digest is None:
+        stage = self.stage_repo.load()
+        if stage is None:
             return
 
-        print("commit", commit_digest)
+        print("stage", stage.tree)
         print()
-        commit = self.commit_repo.load(commit_digest)
-        if commit is None:
-            return
 
-        root = self.tree_repo.load(commit.tree)
+        root = self.tree_repo.load(stage.tree)
         if root is None:
             return
 
