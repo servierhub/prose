@@ -35,8 +35,8 @@ class ParserBase:
     def cleanup_method_tests(self, tests: str) -> list[Tuple[list[str], list[str], list[str]]] | None:
         return None
 
-    def filter(self, files: list[str]) -> Iterable[str]:
-        return []
+    def filter(self, file: str) -> bool:
+        return False
 
     def parse(self, code: Code) -> None:
         pass

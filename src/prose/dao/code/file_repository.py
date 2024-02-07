@@ -20,7 +20,10 @@ class FileRepository:
         self.llm = llm
         pass
 
-    def load(self, path: str, ) -> File:
+    def filter(self, path: str) -> bool:
+        return self.parser.filter(path)
+
+    def load(self, path: str) -> File:
         print(f"Loading {path} ...")
 
         file = File(os.path.basename(path), path)

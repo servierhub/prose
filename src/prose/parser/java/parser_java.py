@@ -99,8 +99,8 @@ class ParserJava(ParserBase):
             for decorator, declaration, body in re.findall(JAVA_TEST_FUNC, tests)
         ]
 
-    def filter(self, files: list[str]) -> Iterable[str]:
-        return filter(lambda x: x.endswith(".java"), files)
+    def filter(self, file: str) -> bool:
+        return file.endswith(".java")
 
     def parse(self, code: Code) -> None:
         tree = self.parser.parse(lambda _, p: code.get_bytes_at(p))  # type: ignore

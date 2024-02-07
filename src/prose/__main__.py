@@ -1,9 +1,12 @@
+import os
 import fire
 import fire.core
 
 from prose.dao.blob.commit_repository import CommitRepository
+from prose.dao.blob.config_repository import ConfigRepository
 from prose.dao.blob.ref_repository import RefRepository
 from prose.domain.blob.commit import Commit
+from prose.domain.blob.config import Config
 from prose.llm.openai.llm_openai import LLMOpenAI
 from prose.parser.java.parser_java import ParserJava
 from prose.tree.tree_writer import TreeWriter
@@ -22,17 +25,25 @@ class Main:
     """
 
     def __init__(self):
+        self.config_repo = ConfigRepository()
         self.ref_repo = RefRepository()
         self.commit_repo = CommitRepository()
         self.parser = ParserJava()
         self.llm = LLMOpenAI(self.parser)
+        self.config = self.config_repo.load() or Config(".", "main")
+        if not os.path.exists(self.config.src_path):
+            panic("Source path not found")
 
-    def __enter__(self):
-        print("Loading config ...")
-        return self
+    def write_tree(self):
+        """Write a source tree.
 
-    def __exit__(self, *_):
-        pass
+        Prose collects undocumented classes and methods, proposes comments and tests using LLM. Prose aborts if some
+        undocumented or untested classes or methods are found.
+
+        Args:
+            src_path (str): the source tree to parse.
+        """
+        print(TreeWriter(self.parser, self.llm).write(self.config.src_path))
 
     def log(self) -> None:
         """Log the collected comments and tests.
@@ -47,16 +58,13 @@ class Main:
         """
         TreeWalker().cat(digest)
 
-    def parse(self, src_path: str) -> None:
+    def parse(self) -> None:
         """Parses a source tree.
 
         Prose collects undocumented classes and methods, proposes comments and tests using LLM. Prose aborts if some
         undocumented or untested classes or methods are found.
-
-        Args:
-            src_path (str): the source tree to parse.
         """
-        tree_root =  TreeWriter(self.parser, self.llm).write(src_path)
+        tree_root = TreeWriter(self.parser, self.llm).write(self.config.src_path)
         if tree_root is not None:
             commit_content = Commit(tree_root)
             commit_digest = self.commit_repo.save(commit_content)

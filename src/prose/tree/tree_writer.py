@@ -43,6 +43,7 @@ class TreeWriter:
         ] + [
             self._write_file(root, file, get_digest_file(os.path.join(root, file)))
             for file in files
+            if self.file_repo.filter(file)
         ]
         digest_objects[os.path.basename(root)] = self.tree_repo.save(blob_content)
         return digest_objects

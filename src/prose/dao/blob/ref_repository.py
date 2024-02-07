@@ -1,8 +1,6 @@
 import os
 import json
 
-import jsbeautifier
-
 from prose.domain.blob.tree import Tree
 from prose.util.util import get_digest_object
 
