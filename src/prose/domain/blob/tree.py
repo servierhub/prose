@@ -5,14 +5,14 @@ from typing import Any
 
 
 @dataclass
-class ProseObject:
+class Tree:
     type: str
     digest: str
     name: str
 
     @staticmethod
-    def of(data: dict) -> ProseObject:
-        return ProseObject(**data)
+    def of(data: dict) -> Tree:
+        return Tree(**data)
 
     def asdict(self) -> dict[str, Any]:
         return asdict(self)

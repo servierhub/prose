@@ -1,7 +1,14 @@
 import fire
 import fire.core
 
-from prose.core import Prose
+from prose.dao.blob.commit_repository import CommitRepository
+from prose.dao.blob.ref_repository import RefRepository
+from prose.domain.blob.commit import Commit
+from prose.llm.openai.llm_openai import LLMOpenAI
+from prose.parser.java.parser_java import ParserJava
+from prose.tree.tree_writer import TreeWriter
+from prose.tree.tree_walker import TreeWalker
+from prose.util.util import panic
 
 
 class Main:
@@ -14,41 +21,47 @@ class Main:
     without documentation or tests. Additionally, Prose adds a summary to the README file.
     """
 
+    def __init__(self):
+        self.ref_repo = RefRepository()
+        self.commit_repo = CommitRepository()
+        self.parser = ParserJava()
+        self.llm = LLMOpenAI(self.parser)
+
+    def __enter__(self):
+        print("Loading config ...")
+        return self
+
+    def __exit__(self, *_):
+        pass
+
     def log(self) -> None:
-        """Parses a source tree.
-
-        Prose collects undocumented classes and methods, proposes comments and tests using LLM. Prose aborts if some
-        undocumented or untested classes or methods are found.
-
-        Args:
-            src (str): the source tree to parse.
+        """Log the collected comments and tests.
         """
-        with Prose() as prose:
-            prose.log()
+        TreeWalker().walk()
 
     def cat(self, digest: str) -> None:
+        """Output the content of a blob.
+
+        Args:
+            digest (str): the digest of the blob.
+        """
+        TreeWalker().cat(digest)
+
+    def parse(self, src_path: str) -> None:
         """Parses a source tree.
 
         Prose collects undocumented classes and methods, proposes comments and tests using LLM. Prose aborts if some
         undocumented or untested classes or methods are found.
 
         Args:
-            src (str): the source tree to parse.
+            src_path (str): the source tree to parse.
         """
-        with Prose() as prose:
-            prose.cat(digest)
-
-    def add(self, src: str = "src/") -> None:
-        """Parses a source tree.
-
-        Prose collects undocumented classes and methods, proposes comments and tests using LLM. Prose aborts if some
-        undocumented or untested classes or methods are found.
-
-        Args:
-            src (str): the source tree to parse.
-        """
-        with Prose() as prose:
-            prose.add(src)
+        tree_root =  TreeWriter(self.parser, self.llm).write(src_path)
+        if tree_root is not None:
+            commit_content = Commit(tree_root)
+            commit_digest = self.commit_repo.save(commit_content)
+            self.ref_repo.save("main", commit_digest)
+            panic("Found some undocumented or untested methods, abort!")
 
     def merge(self, inplace: bool = False) -> None:
         """Merges all comments and tests marked "review".
@@ -56,9 +69,7 @@ class Main:
         Args:
             inplace (bool): Modify the source code in place, otherwise create a copy.
         """
-        with Prose() as prose:
-            prose.merge(inplace)
-
+        pass
 
 if __name__ == "__main__":
     fire.core.Display = lambda lines, out: print(*lines, file=out)

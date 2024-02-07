@@ -1,4 +1,4 @@
-from prose.domain.file import File
+from prose.domain.code.file import File
 from prose.parser.code import Code
 
 

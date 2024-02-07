@@ -1,11 +1,12 @@
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-from prose.domain.method import Method
+from prose.domain.code.method import Method
 
 
 @dataclass
 class Class:
+    package: str
     name: str
     signature: str
     digest: str | None = None

@@ -1,6 +1,6 @@
 from io import StringIO
 
-from prose.domain.file import File
+from prose.domain.code.file import File
 from prose.util.util import panic
 
 
@@ -58,10 +58,8 @@ class Code:
                 if show_line_numbers:
                     buffer.write(str(y).rjust(3, "0"))
                     buffer.write(" ")
-                if y == start_y:
-                    buffer.write(line[start_x:])
-                elif y == end_y:
-                    buffer.write(line[:end_x])
+                if y == end_y:
+                    buffer.write(line[start_x:end_x])
                 else:
-                    buffer.write(line)
+                    buffer.write(line[start_x:])
             return buffer.getvalue()
