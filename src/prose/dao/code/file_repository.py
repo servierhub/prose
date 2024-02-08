@@ -20,8 +20,11 @@ class FileRepository:
         self.llm = llm
         pass
 
-    def filter(self, path: str) -> bool:
-        return self.parser.filter(path)
+    def get_parser(self) -> ParserBase:
+        return self.parser
+
+    def get_lln(self) -> LLMBase:
+        return self.llm
 
     def load(self, path: str) -> File:
         print(f"Loading {path} ...")
@@ -36,8 +39,6 @@ class FileRepository:
                 self._parse_clazz(file.clazz)
             else:
                 self._parse_method(file.clazz.methods[i - 1], code)
-
-        print(json.dumps(file.asdict(), indent = 4))
 
         return file
 

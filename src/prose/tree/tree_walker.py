@@ -1,3 +1,5 @@
+import os
+
 from prose.dao.blob.blob_repository import BlobRepository
 from prose.dao.blob.commit_repository import CommitRepository
 from prose.dao.blob.ref_repository import RefRepository
@@ -28,29 +30,24 @@ class TreeWalker:
         if root is None:
             return
 
-        self._walk_rec(root)
+        self._walk_rec(root, "")
 
-    def _walk_rec(self, tree: list[Tree] | None) -> None:
+    def _walk_rec(self, tree: list[Tree] | None, path: str) -> None:
         if tree is not None:
             for node in tree:
                 if node.type == "tree":
-                    self._walk_rec(self.tree_repo.load(node.digest))
+                    self._walk_rec(self.tree_repo.load(node.digest), os.path.join(path, node.name))
                 elif node.type == "file":
-                    self._walk_file(node)
+                    self._walk_file(node, path)
 
-    def _walk_file(self, file: Tree):
-        methods = self.tree_repo.load(file.digest)
-        if methods is None:
+    def _walk_file(self, file: Tree, path: str) -> None:
+        comments_or_tests = self.tree_repo.load(file.digest)
+        if comments_or_tests is None:
             return
 
-        for method in methods:
-            comments_or_tests = self.tree_repo.load(method.digest)
-            if comments_or_tests is None:
-                continue
-
-            for comment_or_test in comments_or_tests:
-                print(comment_or_test.type, comment_or_test.digest)
-                print(f"Signature: {comment_or_test.name}")
-                print()
-                print(self.blob_repo.load(comment_or_test.digest))
-                print()
+        for comment_or_test in comments_or_tests:
+            print(comment_or_test.type, comment_or_test.digest)
+            print(f"Path: {os.path.join(path, comment_or_test.name)}")
+            print()
+            print(self.blob_repo.load(comment_or_test.digest))
+            print()

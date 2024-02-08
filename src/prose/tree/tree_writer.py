@@ -4,10 +4,10 @@ from prose.dao.code.file_repository import FileRepository
 from prose.dao.blob.ref_repository import RefRepository
 from prose.dao.blob.tree_repository import TreeRepository
 from prose.dao.blob.blob_repository import BlobRepository
-from prose.domain.code.clazz import Class
-from prose.domain.code.method import Method
+from prose.domain.code.file import File
 from prose.domain.blob.tree import Tree
 from prose.llm.llm_base import LLMBase
+from prose.merger.merger import Merger
 from prose.parser.parser_base import ParserBase
 from prose.util.util import get_digest_file
 
@@ -43,7 +43,7 @@ class TreeWriter:
         ] + [
             self._write_file(root, file, get_digest_file(os.path.join(root, file)))
             for file in files
-            if self.file_repo.filter(file)
+            if self.file_repo.get_parser().filter(file)
         ]
         digest_objects[os.path.basename(root)] = self.tree_repo.save(blob_content)
         return digest_objects
@@ -55,52 +55,56 @@ class TreeWriter:
 
         code_file = self.file_repo.load(os.path.join(root, file))
 
-        blob_content = []
-        if code_file.clazz is not None and code_file.clazz.digest is not None:
-            blob_content += [self._write_clazz(code_file.clazz)] + [
-                self._write_method(method)
-                for method in code_file.clazz.methods
-                if method.digest is not None
-            ]
+        blob_content = [
+            self._write_comment(os.path.join(root, file), code_file),
+            self._write_tests(os.path.join(root, file), code_file),
+        ]
         self.tree_repo.save(blob_content, file_digest)
         return Tree("file", file_digest, file)
 
-    def _write_clazz(self, clazz: Class) -> Tree:
-        assert clazz.digest is not None
+    def _write_comment(self, path: str, code_file: File) -> Tree:
+        assert code_file.clazz is not None
 
-        if self.tree_repo.exists(clazz.digest):
-            return Tree("clazz", clazz.digest, clazz.signature)
+        comment_merger = Merger(path)
 
-        blob_content = []
-        if clazz.has_llm_comment and clazz.comment is not None:
-            blob_content += [self._write_comment(clazz.signature, clazz.comment)]
-        self.tree_repo.save(blob_content, clazz.digest)
+        if (
+            code_file.clazz.start_point is not None
+            and code_file.clazz.comment is not None
+        ):
+            comment_merger.merge(code_file.clazz.start_point, code_file.clazz.comment)
 
-        return Tree("clazz", clazz.digest, clazz.signature)
+        for method in code_file.clazz.methods:
+            if (
+                method.start_point is not None
+                and method.comment is not None
+                and method.has_llm_comment
+            ):
+                comment_merger.merge(method.start_point, method.comment)
 
-    def _write_method(self, method: Method) -> Tree:
-        assert method.digest is not None
+        blob_digest = self.blob_repo.save(comment_merger.get_text())
+        return Tree("comment", blob_digest, os.path.basename(path))
 
-        if self.tree_repo.exists(method.digest):
-            return Tree("method", method.digest, method.signature)
+    def _write_tests(self, path: str, code_file: File) -> Tree:
+        assert code_file.clazz is not None
 
-        blob_content = []
-        if method.has_llm_comment and method.comment is not None:
-            blob_content += [self._write_comment(method.signature, method.comment)]
-        if method.tests is not None:
-            for test in method.tests:
-                blob_content += [self._write_test(test.signature, test.code)]
-        self.tree_repo.save(blob_content, method.digest)
+        test_path = path.replace("main", "test").replace(
+            code_file.name, "Test" + code_file.name
+        )
+        if not os.path.exists(test_path):
+            src_lines = self.file_repo.get_parser().get_test_stub(code_file)
+            test_merger = Merger(src_lines)
+        else:
+            test_merger = Merger(test_path)
 
-        return Tree("method", method.digest, method.signature)
+        for method in code_file.clazz.methods:
+            if method.tests is not None and method.has_llm_tests:
+                for test in method.tests:
+                    if test_merger.find(test.signature) is None:
+                        end_of_code = test_merger.find_last(
+                            self.file_repo.get_parser().get_end_of_code()
+                        )
+                        if end_of_code is not None:
+                            test_merger.merge((end_of_code[0], 4), [""] + test.code)
 
-    def _write_comment(self, name: str, comment: list[str]) -> Tree:
-        blob_content = "\n".join(comment)
-        blob_digest = self.blob_repo.save(blob_content)
-        return Tree("comment", blob_digest, name)
-
-    def _write_test(self, name: str, test: list[str]) -> Tree:
-        blob_content = "\n".join(test)
-        blob_digest = self.blob_repo.save(blob_content)
-        return Tree("test", blob_digest, name)
-
+        blob_digest = self.blob_repo.save(test_merger.get_text())
+        return Tree("test", blob_digest, os.path.basename(test_path))

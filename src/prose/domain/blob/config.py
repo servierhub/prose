@@ -6,7 +6,6 @@ from typing import Any
 
 @dataclass
 class Config:
-    src_path: str
     branch: str
 
     @staticmethod

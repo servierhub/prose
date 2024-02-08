@@ -99,6 +99,20 @@ class ParserJava(ParserBase):
             for decorator, declaration, body in re.findall(JAVA_TEST_FUNC, tests)
         ]
 
+    def get_test_stub(self, code_file: File) -> list[str]:
+        return [
+                "package " + code_file.clazz.package + ";\n"
+                "\n",
+                "import org.junit.Test;\n"
+                "\n",
+                "public class Test" + code_file.name + "\n",
+                "{\n"
+                "}\n"
+            ]
+
+    def get_end_of_code(self) -> str:
+        return "}"
+
     def filter(self, file: str) -> bool:
         return file.endswith(".java")
 

@@ -33,25 +33,31 @@ class Main:
         self.commit_repo = CommitRepository()
         self.parser = ParserJava()
         self.llm = LLMOpenAI(self.parser)
-        self.config = self.config_repo.load() or Config(".", "main")
-        if not os.path.exists(self.config.src_path):
-            panic("Source path not found")
+
+        self.config = self.config_repo.load() or Config("main")
+        if not self.config_repo.exists():
+            self.config_repo.save(self.config)
 
     def branch(self, name: str) -> None:
-        """List, create, or delete branches.
+        """Switch to a branch.
+
+        If the branch doesn't exist, a new branch is created from the current branch.
 
         Args:
-            digest (str): the digest of the blob.
+            name (str): the name of the branch.
         """
         ref = self.ref_repo.load(name)
         if ref is not None:
             self.stage_repo.save(Stage(ref))
+        else:
+            ref = self.ref_repo.load(self.config.branch)
+            if ref is not None:
+                self.ref_repo.save(name, ref)
         self.config.branch = name
         self.config_repo.save(self.config)
 
     def status(self) -> None:
-        """Show the working tree status.
-        """
+        """Show the working tree status."""
         TreeWalker().walk()
 
     def cat(self, object: str) -> None:
@@ -62,7 +68,7 @@ class Main:
         """
         TreeWalker().cat(object)
 
-    def add(self, src_path: str | None = None):
+    def add(self, src_path: str):
         """Add file contents to the index.
 
         This command updates the index using the current content found in the working tree, to prepare the content
@@ -84,7 +90,7 @@ class Main:
         Args:
             src_path (str): Files to add content from.
         """
-        tree_root = TreeWriter(self.parser, self.llm).write(src_path or self.config.src_path)
+        tree_root = TreeWriter(self.parser, self.llm).write(src_path)
         if tree_root is not None:
             self.stage_repo.save(Stage(tree_root))
 
@@ -101,13 +107,6 @@ class Main:
             commit_digest = self.commit_repo.save(commit_content)
             self.ref_repo.save(self.config.branch, commit_digest)
 
-    def merge(self, inplace: bool = False) -> None:
-        """Merges all comments and tests marked "review".
-
-        Args:
-            inplace (bool): Modify the source code in place, otherwise create a copy.
-        """
-        pass
 
 if __name__ == "__main__":
     fire.core.Display = lambda lines, out: print(*lines, file=out)
