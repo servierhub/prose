@@ -42,6 +42,9 @@ class TreeWalker:
         self.walk(stage.tree, show_diff)
         pydoc.pager("\n".join(output))
 
+    def write(self, stage: Stage) -> None:
+        self.walk(stage.tree, self._overwrite_content)
+
     def walk(self, root_tree: str, func: Callable[[Tree, str], None]) -> None:
         root = self.tree_repo.load(root_tree)
         if root is not None:
@@ -103,3 +106,13 @@ class TreeWalker:
             output += [line]
         output += [""]
         return output
+
+    def _overwrite_content(self, comment_or_test: Tree, path: str) -> None:
+        blob_content = self.blob_repo.load(comment_or_test.digest)
+        if blob_content is not None:
+            comment_or_test_content = blob_content.splitlines()
+            original_path = os.path.join(self.config.base_path, path, comment_or_test.name)
+            if comment_or_test.type == "test":
+                original_path = original_path.replace("main", "test")
+            with open(original_path, "r") as f:
+                f.writelines(comment_or_test_content)

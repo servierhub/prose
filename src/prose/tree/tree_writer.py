@@ -25,7 +25,7 @@ class TreeWriter:
         digest_objects = {}
         for args in os.walk(os.path.join(self.config.base_path, src_path), topdown=False):
             digest_objects = self._write_tree(digest_objects, *args)
-        return digest_objects.get(src_path) or digest_objects.get("")
+        return digest_objects.get(os.path.basename(src_path)) or digest_objects.get("")
 
     def _write_tree(
         self,
@@ -56,11 +56,13 @@ class TreeWriter:
             return Tree("file", file_digest, file)
 
         code_file = self.file_repo.load(os.path.join(root, file))
-
-        blob_content = [
-            self._write_comment(os.path.join(root, file), code_file),
-            self._write_tests(os.path.join(root, file), code_file),
-        ]
+        if code_file.clazz is None:
+            blob_content = []
+        else:
+            blob_content = [
+                self._write_comment(os.path.join(root, file), code_file),
+                self._write_tests(os.path.join(root, file), code_file),
+            ]
         self.tree_repo.save(blob_content, file_digest)
         return Tree("file", file_digest, file)
 
@@ -97,6 +99,7 @@ class TreeWriter:
             test_merger = Merger(src_lines)
         else:
             test_merger = Merger(test_path)
+
 
         for method in code_file.clazz.methods:
             if method.tests is not None and method.has_llm_tests:

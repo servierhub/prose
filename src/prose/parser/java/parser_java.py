@@ -17,25 +17,28 @@ JAVA_DOC_FRAMEWORK = "JAVADOC"
 JAVA_TEST_FRAMEWORK = "JUNIT"
 
 JAVA_PROMPT_DOCUMENT_CLASS = f"""
-Comment the class by summarizing the {JAVA_DOC_FRAMEWORK} comments below.
-Do not include too much details.
-Do not include any parameters or return.
-Do not include the class definition.
+Comment the class below by summarizing the {JAVA_DOC_FRAMEWORK} comments below.
+Be sure to:
+* Do not include too much details.
+* Do not include any parameters or return.
+* Do not include the class definition.
 The final output must be a {JAVA_DOC_FRAMEWORK} comment.
 """
 
 JAVA_PROMPT_DOCUMENT_METHOD = f"""
-Comment the function below using {JAVA_DOC_FRAMEWORK} and by summarizing what the method do, not as steps but as a text.
-Include always the list of parameters and return value at the end of the comment.
-Do not put the comments in the method body but only in the {JAVA_DOC_FRAMEWORK} section.
-Do not include the function body in the response.
+Comment the method below using {JAVA_DOC_FRAMEWORK} and by summarizing what the method do, not as steps but as a text.
+Be sure to:
+* Include always the list of parameters and return value at the end of the comment.
+* Do not put the comments in the method body but only in the {JAVA_DOC_FRAMEWORK} section.
+* Do not include the function body in the response.
 The final output must be a valid {JAVA_DOC_FRAMEWORK} comment.
 """
 
 JAVA_PROMPT_UNIT_TEST = f"""
 Generate unit tests for the function below using {JAVA_TEST_FRAMEWORK} framework.
-Extract all generated methods and remove everything else.
-Do not include the import and class definition.
+Be sure to:
+* Extract all generated methods and remove everything else.
+* Do not include the import and class definition.
 """
 
 JAVA_IDENTIFIER = ["identifier", "scoped_identifier"]
@@ -47,7 +50,7 @@ JAVA_METHOD_DECLARATION = ["constructor_declaration", "method_declaration"]
 JAVA_METHOD_BODY = ["constructor_body", "block"]
 
 JAVA_COMMENT_JAVADOC = r"^\s*\/\*\*\n(\s*\*.*\n)+\s*\*\/"
-JAVA_TEST_FUNC = r"((?:@.+\n)+)([^@][^(]+\([^)]*\))\s*({\n[^@]*\n})\n"
+JAVA_TEST_FUNC = r"((?:@.+\n)+)([^@][^(]+\([^)]*\)[\s|\w]*)\s*({\n[^@]*\n\s*})\n"
 JAVA_REMOVE_SPACE = r"\s+"
 
 
@@ -100,6 +103,7 @@ class ParserJava(ParserBase):
         ]
 
     def get_test_stub(self, code_file: File) -> list[str]:
+        assert code_file.clazz is not None
         return [
                 "package " + code_file.clazz.package + ";\n"
                 "\n",
@@ -117,13 +121,16 @@ class ParserJava(ParserBase):
         return file.endswith(".java")
 
     def parse(self, code: Code) -> None:
-        tree = self.parser.parse(lambda _, p: code.get_bytes_at(p))  # type: ignore
-        cursor = tree.walk()
-        cursor.goto_first_child()
-        self._parse_class(code, cursor, code.file)
-        if code.file.clazz is not None:
-            while self._parse_method(code, cursor, code.file):
-                pass
+        try:
+            tree = self.parser.parse(lambda _, p: code.get_bytes_at(p))  # type: ignore
+            cursor = tree.walk()
+            cursor.goto_first_child()
+            self._parse_class(code, cursor, code.file)
+            if code.file.clazz is not None:
+                while self._parse_method(code, cursor, code.file):
+                    pass
+        except Exception as x:
+            print(x)
 
     def _parse_class(self, code: Code, cursor: TreeCursor, file: File) -> None:
         package_name_point = self._parse_class_package_name(cursor)

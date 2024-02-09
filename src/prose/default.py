@@ -82,8 +82,17 @@ class Default:
         ref = self._ref_repo.load(self._config.branch)
         if ref is not None:
             commit = self._commit_repo.load(ref)
+        else:
+            commit = None
         if commit is None or commit.tree != tree_root:
             panic("There are some undocumented or untested code.")
+
+    def write(self) -> None:
+        """Write a source tree back to the original locations.
+        """
+        stage = self._stage_repo.load()
+        if stage is not None:
+            TreeWalker(self._config).write(stage)
 
     def commit(self) -> None:
         """Parses a source tree.
