@@ -4,6 +4,7 @@ from prose.dao.code.file_repository import FileRepository
 from prose.dao.blob.ref_repository import RefRepository
 from prose.dao.blob.tree_repository import TreeRepository
 from prose.dao.blob.blob_repository import BlobRepository
+from prose.domain.blob.config import Config
 from prose.domain.code.file import File
 from prose.domain.blob.tree import Tree
 from prose.llm.llm_base import LLMBase
@@ -13,7 +14,8 @@ from prose.util.util import get_digest_file
 
 
 class TreeWriter:
-    def __init__(self, parser: ParserBase, llm: LLMBase):
+    def __init__(self, config: Config, parser: ParserBase, llm: LLMBase):
+        self.config = config
         self.file_repo = FileRepository(parser, llm)
         self.ref_repo = RefRepository()
         self.tree_repo = TreeRepository()
@@ -21,9 +23,9 @@ class TreeWriter:
 
     def write(self, src_path: str) -> str | None:
         digest_objects = {}
-        for args in os.walk(src_path, topdown=False):
+        for args in os.walk(os.path.join(self.config.base_path, src_path), topdown=False):
             digest_objects = self._write_tree(digest_objects, *args)
-        return digest_objects.get("")
+        return digest_objects.get(src_path) or digest_objects.get("")
 
     def _write_tree(
         self,
