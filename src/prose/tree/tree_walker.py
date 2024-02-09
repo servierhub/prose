@@ -112,7 +112,7 @@ class TreeWalker:
     def _overwrite_content(self, comment_or_test: Tree, path: str) -> None:
         blob_content = self.blob_repo.load(comment_or_test.digest)
         if blob_content is not None:
-            comment_or_test_content = blob_content.splitlines()
+            comment_or_test_content = blob_content
 
             original_path = os.path.join(self.config.base_path, path, comment_or_test.name)
             if comment_or_test.type == "test":
@@ -122,4 +122,4 @@ class TreeWalker:
             os.makedirs(original_parent_path, exist_ok=True)
 
             with open(original_path, "w") as f:
-                f.write("\n".join(comment_or_test_content))
+                f.write(comment_or_test_content)
