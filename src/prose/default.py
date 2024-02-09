@@ -78,7 +78,7 @@ class Default:
         """
         tree_root = TreeWriter(self._config, self._parser, self._llm).write(src_path)
         if tree_root is not None:
-            self._stage_repo.save(Stage(tree_root))
+            self._stage_repo.save(Stage(tree_root, src_path))
         ref = self._ref_repo.load(self._config.branch)
         if ref is not None:
             commit = self._commit_repo.load(ref)
@@ -103,6 +103,6 @@ class Default:
         parent = self._ref_repo.load(self._config.branch)
         index = self._stage_repo.load()
         if index is not None:
-            commit_content = Commit(index.tree, parent)
+            commit_content = Commit(index.tree, index.path, parent)
             commit_digest = self._commit_repo.save(commit_content)
             self._ref_repo.save(self._config.branch, commit_digest)

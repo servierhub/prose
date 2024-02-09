@@ -17,10 +17,13 @@ class TreeRepository:
         return os.path.exists(object_path)
 
     def load(self, digest: str) -> list[Tree] | None:
-        object_path = os.path.join(".prose", "objects", digest[:2], digest)
-        if os.path.exists(object_path):
-            with open(object_path, "r") as f:
-                return [Tree.of(x) for x in json.load(f)]
+        try:
+            object_path = os.path.join(".prose", "objects", digest[:2], digest)
+            if os.path.exists(object_path):
+                with open(object_path, "r") as f:
+                    return [Tree.of(x) for x in json.load(f)]
+        except:
+            return None
 
     def save(self, content: list[Tree], digest: str | None = None) -> str:
         content_asdicts = [x.asdict() for x in content]

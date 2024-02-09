@@ -7,6 +7,7 @@ from typing import Any
 @dataclass
 class Stage:
     tree: str
+    path: str
 
     @staticmethod
     def of(data: dict) -> Stage:

@@ -28,7 +28,7 @@ class TreeWalker:
         ]
         def show_diff_one_object(file: Tree, path: str) -> None:
             if object == file.digest:
-                output.extend(self._get_diff(file, path))
+                output.extend(self._get_diff(file, os.path.join(stage.path, path)))
         self.walk(stage.tree, show_diff_one_object)
         pydoc.pager("\n".join(output))
 
@@ -38,12 +38,14 @@ class TreeWalker:
             ""
         ]
         def show_diff(file: Tree, path: str) -> None:
-            output.extend(self._get_diff(file, path))
+            output.extend(self._get_diff(file, os.path.join(stage.path, path)))
         self.walk(stage.tree, show_diff)
         pydoc.pager("\n".join(output))
 
     def write(self, stage: Stage) -> None:
-        self.walk(stage.tree, self._overwrite_content)
+        def overwrite_content(file: Tree, path: str) -> None:
+            self._overwrite_content(file, os.path.join(stage.path, path))
+        self.walk(stage.tree, overwrite_content)
 
     def walk(self, root_tree: str, func: Callable[[Tree, str], None]) -> None:
         root = self.tree_repo.load(root_tree)
@@ -111,8 +113,13 @@ class TreeWalker:
         blob_content = self.blob_repo.load(comment_or_test.digest)
         if blob_content is not None:
             comment_or_test_content = blob_content.splitlines()
+
             original_path = os.path.join(self.config.base_path, path, comment_or_test.name)
             if comment_or_test.type == "test":
                 original_path = original_path.replace("main", "test")
-            with open(original_path, "r") as f:
-                f.writelines(comment_or_test_content)
+
+            original_parent_path = os.path.dirname(original_path)
+            os.makedirs(original_parent_path, exist_ok=True)
+
+            with open(original_path, "w") as f:
+                f.write("\n".join(comment_or_test_content))

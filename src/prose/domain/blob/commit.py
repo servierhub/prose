@@ -7,6 +7,7 @@ from typing import Any
 @dataclass
 class Commit:
     tree: str
+    path: str
     parent: str | None = None
 
     @staticmethod

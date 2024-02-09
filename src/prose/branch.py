@@ -33,7 +33,7 @@ class Branch:
         if ref is not None:
             commit = self._commit_repo.load(ref)
             if commit is not None:
-                self._stage_repo.save(Stage(commit.tree))
+                self._stage_repo.save(Stage(commit.tree, commit.path))
         else:
             ref = self._ref_repo.load(self._config.branch)
             if ref is not None:
