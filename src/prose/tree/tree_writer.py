@@ -63,6 +63,10 @@ class TreeWriter:
                 self._write_comment(os.path.join(root, file), code_file),
                 self._write_tests(os.path.join(root, file), code_file),
             ]
+
+        if len(blob_content) > 0 and blob_content[0].type == "comment":
+            file_digest = blob_content[0].digest
+
         self.tree_repo.save(blob_content, file_digest)
         return Tree("file", file_digest, file)
 

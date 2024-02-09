@@ -12,7 +12,7 @@ from prose.domain.code.clazz import Class
 from prose.domain.code.method import Method
 from prose.util.util import get_digest_string
 
-JAVA_LANGUAGE = Language("build/grammar.so", "java")
+JAVA_LANGUAGE = Language("/usr/local/share/prose/build/grammar.so", "java")
 JAVA_DOC_FRAMEWORK = "JAVADOC"
 JAVA_TEST_FRAMEWORK = "JUNIT"
 
