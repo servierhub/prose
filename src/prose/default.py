@@ -106,19 +106,23 @@ class DefaultOp:
 
         changes = []
         def collect_change(file: Tree, path: str) -> None:
-            changes.append(os.path.join(file.digest, path))
+            changes.append(file.digest)
         TreeWalker(self._config).walk(tree_root, collect_change)
+
         if len(changes) > 0:
             stage = Stage(tree_root, src_path)
             self._stage_repo.save(stage)
         else:
-            stage = self._stage_repo.load() or Stage(tree_root, src_path)
+            stage = self._stage_repo.load()
+            if stage is None:
+                return die("No files staged")
 
         ref = self._ref_repo.load(self._config.branch)
         if ref is not None:
             commit = self._commit_repo.load(ref)
         else:
             commit = None
+
         if commit is None or commit.tree != stage.tree:
             panic("There are some undocumented or untested code.")
 
