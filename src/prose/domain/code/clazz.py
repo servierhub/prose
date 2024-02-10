@@ -12,6 +12,7 @@ class Class:
     digest: str | None = None
     start_point: tuple[int, int] | None = None
     end_point: tuple[int, int] | None = None
+    disable_tests: bool = False
     has_llm_comment: bool = False
     comment: list[str] | None = None
     methods: list[Method] = field(default_factory=list)

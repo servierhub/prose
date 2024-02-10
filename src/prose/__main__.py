@@ -1,13 +1,14 @@
 import fire
 import fire.core
-from prose.branch import Branch
+
+from prose.branch import BranchOp
+from prose.config import ConfigOp
+from prose.default import DefaultOp
+from prose.domain.blob.config import Config
 from prose.dao.blob.config_repository import ConfigRepository
 
-from prose.domain.blob.config import Config
-from prose.default import Default
 
-
-class Main(Default):
+class Main(DefaultOp):
     """A CLI tool to bring the power of LLM to the CI/CD by ensuring documentation and unit tests for an
     entire source tree.
 
@@ -24,7 +25,8 @@ class Main(Default):
             config_repo.save(config)
 
         super().__init__(config)
-        self.branch = Branch(config)
+        self.config = ConfigOp(config)
+        self.branch = BranchOp(config)
 
 if __name__ == "__main__":
     fire.core.Display = lambda lines, out: print(*lines, file=out)

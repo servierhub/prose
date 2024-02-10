@@ -44,10 +44,10 @@ Be sure to:
 JAVA_IDENTIFIER = ["identifier", "scoped_identifier"]
 JAVA_BLOCK_COMMENT = ["block_comment"]
 JAVA_PACKAGE_DECLARATION = ["package_declaration"]
-JAVA_CLASS_DECLARATION = ["class_declaration"]
-JAVA_CLASS_BODY = ["class_body"]
+JAVA_CLASS_DECLARATION = ["class_declaration", "interface_declaration"]
+JAVA_CLASS_BODY = ["class_body", "interface_body"]
 JAVA_METHOD_DECLARATION = ["constructor_declaration", "method_declaration"]
-JAVA_METHOD_BODY = ["constructor_body", "block"]
+JAVA_METHOD_BODY = ["constructor_body", "block", ";"]
 
 JAVA_COMMENT_JAVADOC = r"^\s*\/\*\*\n(\s*\*.*\n)+\s*\*\/"
 JAVA_TEST_FUNC = r"((?:@.+\n)+)([^@][^(]+\([^)]*\)[\s|\w]*)\s*({\n[^@]*\n\s*})\n"
@@ -109,8 +109,8 @@ class ParserJava(ParserBase):
                 "\n",
                 "import org.junit.Test;\n"
                 "\n",
-                "public class Test" + code_file.name + "\n",
-                "{\n"
+                "public class Test" + code_file.clazz.name + "\n",
+                "{\n",
                 "}\n"
             ]
 
@@ -121,18 +121,15 @@ class ParserJava(ParserBase):
         return file.endswith(".java")
 
     def parse(self, code: Code) -> None:
-        try:
-            tree = self.parser.parse(lambda _, p: code.get_bytes_at(p))  # type: ignore
-            cursor = tree.walk()
-            cursor.goto_first_child()
-            self._parse_class(code, cursor, code.file)
-            if code.file.clazz is not None:
-                while self._parse_method(code, cursor, code.file):
-                    pass
-        except Exception as x:
-            print(x)
+        tree = self.parser.parse(lambda _, p: code.get_bytes_at(p))  # type: ignore
+        cursor = tree.walk()
+        cursor.goto_first_child()
+        self._parse_class_or_interface(code, cursor, code.file)
+        if code.file.clazz is not None:
+            while self._parse_method(code, cursor, code.file):
+                pass
 
-    def _parse_class(self, code: Code, cursor: TreeCursor, file: File) -> None:
+    def _parse_class_or_interface(self, code: Code, cursor: TreeCursor, file: File) -> None:
         package_name_point = self._parse_class_package_name(cursor)
         clazz_point, comment_point = self._accept_with_comment(cursor, JAVA_CLASS_DECLARATION)
         child_cursor = cursor.copy()
@@ -159,6 +156,7 @@ class ParserJava(ParserBase):
         file.clazz.digest = clazz_digest
         file.clazz.start_point = clazz_point[0]
         file.clazz.end_point = clazz_point[1]
+        file.clazz.disable_tests = "interface" in clazz_signature
         file.clazz.has_llm_comment = False
         file.clazz.comment = clazz_comment
 

@@ -7,7 +7,7 @@ from prose.domain.blob.stage import Stage
 from prose.util.util import panic
 
 
-class Branch:
+class BranchOp:
 
     def __init__(self, config: Config):
         self._config = config

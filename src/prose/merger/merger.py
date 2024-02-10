@@ -1,7 +1,7 @@
 class Merger:
 
     def __init__(self, path_or_lines: str | list[str]):
-
+        self.modified = False
         if isinstance(path_or_lines, str):
             with open(path_or_lines, "r") as f:
                 self.src_lines = f.readlines()
@@ -13,6 +13,9 @@ class Merger:
             self.mapper[i] = i
 
         self.num = len(self.src_lines)
+
+    def is_modified(self):
+        return self.modified
 
     def get_num(self):
         return self.num
@@ -36,14 +39,12 @@ class Merger:
 
     def merge(self, start_point: tuple[int, int], text: list[str]) -> None:
         line_num = start_point[0]
-
         spaces = " " * start_point[1]
-
         for line in text:
             self.src_lines.insert(self.mapper[line_num], spaces + line + "\n")
-
             for k, v in self.mapper.items():
                 if k >= line_num:
                     self.mapper[k] = v + 1
+        self.modified = True
 
 
