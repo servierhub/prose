@@ -5,7 +5,7 @@
 A developer tool to bring the power of LLM to the CI/CD by ensuring documentation and unit tests for an entire source
 tree.
 
-## Intro
+## Gettin Started
 
 Prose is a tool to document and generate tests for Java and Python projects using LLM. It allows for easy addition of
 new languages and LLM systems, such as Azure OpenAI (as the default). Prose parses source code and generates comments
@@ -99,20 +99,17 @@ Use git to clone this repository into your computer.
 git clone https://gitlab.com/romualdrousseau/prose.git
 ```
 
-### Testing
-
-TBD by Prose
-
 ## Contribute
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 Please make sure to update tests as appropriate.
 
-## License
+## Authors
 
-TBD
+* Romuald Rousseau, romuald.rousseau@servier.com
 
-## Conclusion
+## Version History
 
-TBD
+* 0.1.0
+* Initial Release
