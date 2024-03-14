@@ -1,6 +1,6 @@
 # Prose
 
-![Servier Inspired](https://raw.githubusercontent.com/servierhub/servierhub-charter/main/badges/powered.svg)
+![Servier Inspired](https://raw.githubusercontent.com/servierhub/sh-charter/main/badges/powered.svg)
 
 A developer tool to bring the power of LLM to the CI/CD by ensuring documentation and unit tests for an entire source
 tree.
